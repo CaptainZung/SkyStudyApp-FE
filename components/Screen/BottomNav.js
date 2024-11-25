@@ -14,7 +14,7 @@ export default function BottomNav({ userName, avatarSource }) {
         activeOpacity={0.8} // Add feedback on press
       >
         <Image
-          source={require('../assets/images/home_icon.png')}
+          source={require('../../assets/images/home_icon.png')}
           style={styles.navIcon}
           resizeMode="contain"
         />
@@ -27,7 +27,7 @@ export default function BottomNav({ userName, avatarSource }) {
         activeOpacity={0.8}
       >
         <Image
-          source={require('../assets/images/scan_icon.png')}
+          source={require('../../assets/images/scan_icon.png')}
           style={styles.navIcon}
           resizeMode="contain"
         />
@@ -40,7 +40,7 @@ export default function BottomNav({ userName, avatarSource }) {
         activeOpacity={0.8}
       >
         <Image
-          source={require('../assets/images/setting_icon.png')}
+          source={require('../../assets/images/setting_icon.png')}
           style={styles.navIcon}
           resizeMode="contain"
         />

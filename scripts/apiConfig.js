@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-const NGROK_API_URL = 'https://33ce-2001-ee0-7b22-2400-31d9-4d1d-b2c9-7ded.ngrok-free.app/app';
+const NGROK_API_URL = 'https://3040-2001-ee0-4b7a-8ae0-6d4b-be8a-389c-77df.ngrok-free.app/app/';
 const LOCAL_API_URL = 'http://172.0.0.1:8000/app/Login'; // Default for local environment
 const SERVER_API_URL = 'https://enhanced-snake-externally.ngrok-free.app/predict';
 

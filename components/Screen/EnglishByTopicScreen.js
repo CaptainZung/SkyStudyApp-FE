@@ -1,14 +1,38 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import BottomNav from './BottomNav';
+import { NGROK_API_URL } from '../../scripts/apiConfig';
 
 export default function EnglishByTopicScreen() {
   const navigation = useNavigation();
 
+  const navigateToVocabulary = async (topic) => {
+    try {
+      const response = await fetch(`${NGROK_API_URL}Topic/?topic=${topic}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch vocabulary: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.length === 0) {
+        Alert.alert('No Vocabulary', `No vocabulary found for topic: ${topic}`);
+        return;
+      }
+
+      // Điều hướng đến VocabularyScreen với dữ liệu
+      navigation.navigate('VocabularyScreen', { topic, words: data });
+    } catch (error) {
+      console.error('Error fetching vocabulary:', error);
+      Alert.alert('Error', 'Failed to load vocabulary. Please try again later.');
+    }
+  };
+
   return (
     <ImageBackground
-      source={require('../assets/images/anhnenchinh.png')}
+      source={require('../../assets/images/anhnenchinh.png')}
       style={styles.backgroundImage}
     >
       {/* Header */}
@@ -21,25 +45,25 @@ export default function EnglishByTopicScreen() {
 
       {/* Topics Section */}
       <View style={styles.topicContainer}>
-        <TouchableOpacity style={styles.topicButton}>
+        <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Animals')}>
           <Image
-            source={require('../assets/images/whale.png')}
+            source={require('../../assets/images/whale.png')}
             style={styles.topicImage}
           />
           <Text style={styles.topicText}>Animals</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.topicButton}>
+        <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Weathers')}>
           <Image
-            source={require('../assets/images/weather.png')}
+            source={require('../../assets/images/weather.png')}
             style={styles.topicImage}
           />
           <Text style={styles.topicText}>Weathers</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.topicButton}>
+        <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Foods')}>
           <Image
-            source={require('../assets/images/food.png')}
+            source={require('../../assets/images/food.png')}
             style={styles.topicImage}
           />
           <Text style={styles.topicText}>Foods</Text>
@@ -64,9 +88,9 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginRight: 20,
-    padding: 10, // Tăng không gian bên trong nút
-    backgroundColor: 'rgba(255, 255, 255, 0.3)', // Thêm nền để nổi bật hơn
-    borderRadius: 10, // Bo góc
+    padding: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 10,
   },
   backButtonText: {
     fontSize: 24,
@@ -74,7 +98,7 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#FFF',
   },

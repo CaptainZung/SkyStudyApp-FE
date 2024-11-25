@@ -32,9 +32,9 @@ export default function HomeScreen({ route }) {
   };
 
   const banners = [
-    { image: require('../assets/images/banner1.jpg') },
-    { image: require('../assets/images/banner2.jpg') },
-    { image: require('../assets/images/banner3.jpg') },
+    { image: require('../../assets/images/banner1.jpg') },
+    { image: require('../../assets/images/banner2.jpg') },
+    { image: require('../../assets/images/banner3.jpg') },
   ];
 
   const scrollViewRef = useRef(null);
@@ -51,10 +51,10 @@ export default function HomeScreen({ route }) {
   }, [currentIndex]);
 
   return (
-    <ImageBackground source={require('../assets/images/anhnenchinh.png')} style={styles.backgroundImage}>
+    <ImageBackground source={require('../../assets/images/anhnenchinh.png')} style={styles.backgroundImage}>
       <View style={styles.avatarSection}>
         <TouchableOpacity onPress={chooseImage}>
-          <Image source={avatarSource ? avatarSource : require('../assets/images/flip.png')} style={styles.avatar} />
+          <Image source={avatarSource ? avatarSource : require('../../assets/images/flip.png')} style={styles.avatar} />
         </TouchableOpacity>
 
         <View style={styles.infoContainer}>
@@ -95,17 +95,17 @@ export default function HomeScreen({ route }) {
 
       <View style={styles.buttonsContainer}>
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('EnglishByTopic')}>
-          <Image source={require('../assets/images/englishbytopic_icon.png')} style={styles.buttonIcon} />
+          <Image source={require('../../assets/images/englishbytopic_icon.png')} style={styles.buttonIcon} />
           <Text style={styles.buttonText}>English by topic</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Game')}>
-          <Image source={require('../assets/images/game_icon.png')} style={styles.buttonIcon} />
+          <Image source={require('../../assets/images/game_icon.png')} style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Playing Game</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Dictionary')}>
-          <Image source={require('../assets/images/dictionary_icon.png')} style={styles.buttonIcon} />
+          <Image source={require('../../assets/images/dictionary_icon.png')} style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Your Dictionary</Text>
         </TouchableOpacity>
       </View>

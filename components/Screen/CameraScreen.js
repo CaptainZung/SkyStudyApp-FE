@@ -8,7 +8,8 @@ import {
   Text,
   SafeAreaView,
 } from 'react-native';
-import { AI_API_URL } from '../scripts/apiConfig';
+
+const AI_API_URL = "https://enhanced-snake-externally.ngrok-free.app/predict";
 
 export default function CameraScreen({ navigation }) {
   const [facing, setFacing] = useState('back'); // 'back' or 'front'
@@ -20,12 +21,10 @@ export default function CameraScreen({ navigation }) {
   const cameraRef = useRef(null);
 
   if (!permission) {
-    // Camera permissions are still loading
     return <View />;
   }
 
   if (!permission.granted) {
-    // Camera permissions are not granted yet
     return (
       <View style={styles.container}>
         <Text style={styles.permissionMessage}>
@@ -54,23 +53,26 @@ export default function CameraScreen({ navigation }) {
       setProcessing(true);
 
       try {
+        // Chụp ảnh và lưu Base64
         const photo = await cameraRef.current.takePictureAsync({
           base64: true,
-          quality: 0.8, // Adjust the quality (0-1) as needed
+          quality: 0.8,
         });
-        console.log('Photo taken:', photo.uri);
 
+        console.log("Photo taken:", photo.uri);
+
+        // Gửi ảnh đến server
         const formData = new FormData();
-        formData.append('file', {
+        formData.append("file", {
           uri: photo.uri,
-          name: 'photo.jpg',
-          type: 'image/jpeg',
+          name: "photo.jpg",
+          type: "image/jpeg",
         });
 
         const response = await fetch(AI_API_URL, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
           body: formData,
         });
@@ -81,13 +83,20 @@ export default function CameraScreen({ navigation }) {
           );
         }
 
+        // Lấy kết quả từ server
         const result = await response.json();
-        console.log('Predictions received:', result);
+        const { processed_image, predictions } = result;
 
-        navigation.navigate('Detection', { predictions: result.results });
+        console.log("Predictions received:", predictions);
+
+        // Điều hướng đến Detection screen với ảnh và kết quả
+        navigation.navigate("Detection", {
+          image: processed_image, // Truyền ảnh Base64 đã xử lý từ server
+          predictions, // Truyền kết quả từ server
+        });
       } catch (error) {
-        console.error('Error sending photo to server:', error);
-        alert('An error occurred while connecting to the server.');
+        console.error("Error sending photo to server:", error);
+        alert("An error occurred while connecting to the server.");
       } finally {
         setProcessing(false);
       }
@@ -103,7 +112,7 @@ export default function CameraScreen({ navigation }) {
           onPress={() => navigation.goBack()}
         >
           <Image
-            source={require('../assets/images/back_icon.png')}
+            source={require('../../assets/images/back_icon.png')}
             style={styles.icon}
           />
         </TouchableOpacity>
@@ -112,8 +121,8 @@ export default function CameraScreen({ navigation }) {
           <Image
             source={
               flash === 'off'
-                ? require('../assets/images/flashoff.png')
-                : require('../assets/images/flashon.png')
+                ? require('../../assets/images/flashoff.png')
+                : require('../../assets/images/flashon.png')
             }
             style={styles.icon}
           />
@@ -121,7 +130,7 @@ export default function CameraScreen({ navigation }) {
 
         <TouchableOpacity style={styles.topButton} onPress={toggleCameraFacing}>
           <Image
-            source={require('../assets/images/flip.png')}
+            source={require('../../assets/images/flip.png')}
             style={styles.icon}
           />
         </TouchableOpacity>
@@ -150,7 +159,7 @@ export default function CameraScreen({ navigation }) {
           disabled={processing}
         >
           <Image
-            source={require('../assets/images/cam.png')}
+            source={require('../../assets/images/cam.png')}
             style={styles.captureIcon}
           />
         </TouchableOpacity>
@@ -181,6 +190,9 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+    aspectRatio: 3 / 4,
+    width: '100%',
+    height: '100%',
   },
   bottomButtonsContainer: {
     justifyContent: 'center',
@@ -207,17 +219,22 @@ const styles = StyleSheet.create({
   },
   processingOverlay: {
     position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
-    top: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: '#1E90FF', // Màu xanh dương đồng nhất
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10, // Đảm bảo overlay hiển thị trên cùng
   },
   processingText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center', // Căn giữa ngang
+    justifyContent:'center',
+    alignItems: 'center',
   },
   permissionMessage: {
     textAlign: 'center',

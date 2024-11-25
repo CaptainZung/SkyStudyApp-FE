@@ -48,7 +48,7 @@ export default function SettingScreen({ navigation, route }) {
 
   return (
     <ImageBackground
-      source={require('../assets/images/anhnenchinh.png')}
+      source={require('../../assets/images/anhnenchinh.png')}
       style={styles.backgroundImage}
     >
       <View style={styles.container}>
@@ -56,7 +56,7 @@ export default function SettingScreen({ navigation, route }) {
         <View style={styles.profileSection}>
           <TouchableOpacity onPress={chooseImage}>
             <Image
-              source={avatarSource ? avatarSource : require('../assets/images/flip.png')}
+              source={avatarSource ? avatarSource : require('../../assets/images/flip.png')}
               style={styles.avatar}
             />
           </TouchableOpacity>

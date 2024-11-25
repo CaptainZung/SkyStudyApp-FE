@@ -17,7 +17,7 @@ export default function YourDictionary() {
 
   return (
     <ImageBackground
-      source={require('../assets/images/anhnenchinh.png')}
+      source={require('../../assets/images/anhnenchinh.png')}
       style={styles.backgroundImage}
     >
       {/* Header */}
@@ -40,7 +40,7 @@ export default function YourDictionary() {
         />
         <TouchableOpacity style={styles.searchButton}>
           <Image
-            source={require('../assets/images/search.png')}
+            source={require('../../assets/images/search.png')}
             style={styles.searchIcon}
           />
         </TouchableOpacity>

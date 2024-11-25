@@ -10,7 +10,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { API_URL } from '../scripts/apiConfig';
+import { API_URL } from '../../scripts/apiConfig';
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
@@ -20,7 +20,7 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     if (username.trim() && password.trim()) {
       try {
-        const response = await fetch('{API_URL}/Login/', {
+        const response = await fetch(`${API_URL}Login/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <ImageBackground
-      source={require('../assets/images/anhnen.jpg')}
+      source={require('../../assets/images/anhnen.jpg')}
       style={styles.backgroundImage}
     >
       <KeyboardAvoidingView

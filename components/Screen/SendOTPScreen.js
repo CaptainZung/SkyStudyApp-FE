@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { API_URL } from '../scripts/apiConfig';
+import { API_URL } from '../../scripts/apiConfig';
 
 export default function SendOTP({ navigation }) {
   const [phoneNumber, setPhoneNumber] = useState('');
