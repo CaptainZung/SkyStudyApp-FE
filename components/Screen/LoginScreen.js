@@ -60,7 +60,7 @@ export default function LoginScreen({ navigation }) {
 
         <TextInput
           style={styles.input}
-          placeholder="Nhập tài khoản"
+          placeholder="Nhập số điện thoại"
           value={username}
           onChangeText={setUsername}
           placeholderTextColor="gray"

@@ -6,7 +6,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   ImageBackground,
+  Image,
+  Alert,
 } from 'react-native';
+import { API_URL } from '../../scripts/apiConfig';
 
 export default function SignUpScreen({ navigation }) {
   const [phone, setPhone] = useState('');
@@ -14,26 +17,56 @@ export default function SignUpScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     if (!phone || !username || !password) {
-      alert('Vui lòng điền đầy đủ thông tin.');
+      Alert.alert('Error', 'Please fill out all fields.');
       return;
     }
-    // Thêm logic gửi dữ liệu đăng ký lên server
-    console.log('Phone:', phone, 'Username:', username, 'Password:', password);
-    alert('Đăng ký thành công!');
-    navigation.goBack(); // Quay lại màn hình đăng nhập
+
+    try {
+      const response = await fetch(`${API_URL}register/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone, username, password }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Registration failed.');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        Alert.alert('Success', 'Registration successful!');
+        navigation.navigate('NameInputScreen'); // Redirect to NameInputScreen
+      } else {
+        Alert.alert('Error', data.message || 'Registration failed.');
+      }
+    } catch (error) {
+      console.error('Error during registration:', error);
+      Alert.alert('Error', 'Failed to register. Please try again later.');
+    }
   };
 
   return (
     <ImageBackground
-      source={require('../../assets/images/background_signup.png')} // Thay bằng đường dẫn ảnh nền
+      source={require('../../assets/images/anhnenchinh.png')}
       style={styles.backgroundImage}
     >
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Image source={require('../../assets/images/back_icon.png')} style={styles.icon} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Đăng kí</Text>
+      </View>
+
       <View style={styles.container}>
         <Text style={styles.title}>Tài khoản mới</Text>
 
-        {/* Nhập số điện thoại */}
         <TextInput
           style={styles.input}
           placeholder="Nhập số điện thoại"
@@ -43,7 +76,6 @@ export default function SignUpScreen({ navigation }) {
           onChangeText={setPhone}
         />
 
-        {/* Nhập tên đăng nhập */}
         <TextInput
           style={styles.input}
           placeholder="Nhập tên đăng nhập"
@@ -52,7 +84,6 @@ export default function SignUpScreen({ navigation }) {
           onChangeText={setUsername}
         />
 
-        {/* Nhập mật khẩu */}
         <View style={styles.passwordContainer}>
           <TextInput
             style={[styles.input, { flex: 1 }]}
@@ -66,11 +97,10 @@ export default function SignUpScreen({ navigation }) {
             onPress={() => setShowPassword(!showPassword)}
             style={styles.eyeButton}
           >
-            <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
+            <Text style={styles.eyeText}>{showPassword ? '🙉' : '🙈'}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Nút đăng ký */}
         <TouchableOpacity style={styles.signupButton} onPress={handleSignUp}>
           <Text style={styles.signupButtonText}>Đăng Kí</Text>
         </TouchableOpacity>
@@ -84,57 +114,99 @@ const styles = StyleSheet.create({
     flex: 1,
     resizeMode: 'cover',
   },
-  container: {
-    flex: 1,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 50,
+    paddingHorizontal: 20,
+  },
+  backButton: {
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    width: 50,
+    height: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 25,
+    marginRight: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  icon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+    tintColor: '#FFF',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 30,
+    color: '#FFF',
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
   },
   input: {
-    width: '90%',
-    height: 50,
+    width: '100%',
+    height: 60,
     backgroundColor: '#FFF',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    fontSize: 16,
+    borderRadius: 15,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    fontSize: 18,
     color: '#000',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '90%',
-    height: 50,
+    width: '100%',
+    height: 60,
     backgroundColor: '#FFF',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    marginBottom: 15,
+    borderRadius: 15,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    overflow: 'hidden',
   },
   eyeButton: {
-    padding: 10,
+    width: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   eyeText: {
-    fontSize: 16,
+    fontSize: 30,
     color: '#999',
   },
   signupButton: {
-    width: '90%',
-    height: 50,
+    width: '100%',
+    height: 60,
     backgroundColor: '#0080FF',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 15,
     marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   signupButtonText: {
     color: '#FFF',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
 });

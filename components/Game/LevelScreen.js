@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   FlatList,
   Dimensions,
+  Image,
   ImageBackground,
 } from 'react-native';
-
 const screenWidth = Dimensions.get('window').width;
 
 export default function LevelScreen({ route, navigation }) {
@@ -16,19 +16,19 @@ export default function LevelScreen({ route, navigation }) {
 
   // Danh sách các màn chơi
   const levels = [
-    { id: '1', name: 'Màn 1' },
-    { id: '2', name: 'Màn 2' },
-    { id: '3', name: 'Màn 3' },
-    { id: '4', name: 'Màn 4' },
-    { id: '5', name: 'Màn 5' },
+    { id: '1', name: 'Màn 1', image: require('../../assets/images/level1.png') },
+    { id: '2', name: 'Màn 2', image: require('../../assets/images/level2.png') },
+    { id: '3', name: 'Màn 3', image: require('../../assets/images/level3.png') },
+    { id: '4', name: 'Màn 4', image: require('../../assets/images/level4.png') },
+    { id: '5', name: 'Màn 5', image: require('../../assets/images/level5.png') },
   ];
 
   const renderLevelItem = ({ item }) => (
     <TouchableOpacity
       style={styles.levelBox}
-      onPress={() => navigation.navigate('GamePlay', { levelId: item.id })}
+      onPress={() => navigation.navigate('GamePlayScreen', { levelId: item.id })}
     >
-      <Text style={styles.levelText}>{item.name}</Text>
+      <Image source={item.image} style={styles.levelImage} />
     </TouchableOpacity>
   );
 
@@ -92,22 +92,14 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   levelBox: {
-    width: screenWidth / 2.5,
-    height: screenWidth / 4,
-    backgroundColor: '#4FAAF5',
-    borderRadius: 15,
     margin: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
   },
-  levelText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
+  levelImage: {
+    width: screenWidth / 2.5, // Đặt kích thước hình ảnh theo nhu cầu
+    height: screenWidth / 3, // Tỉ lệ phù hợp
+    resizeMode: 'contain', // Đảm bảo hình ảnh giữ nguyên tỉ lệ
+    borderRadius: 30,
+},
 });

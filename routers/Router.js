@@ -17,9 +17,12 @@ import DefinitionScreen from '../components/Screen/DefinitionScreen';
 import GamePlayScreen from '../components/Game/GamePlayScreen';
 import LevelScreen from '../components/Game/LevelScreen';
 import SignUpScreen from '../components/Screen/SignUpScreen';
-
+import Micro from '../components/Screen/Micro';
+import ExampleForVocabScreen from '../components/Screen/ExampleForVocabScreen';
 // import VerifyOTP from '../components/VerifyOTPScreen';
 // import Detection from '../components/DetectionScreen';
+import GuessTheWord from "../components/Game/GuessTheWord";
+import ListenToGuess from "../components/Game/ListenToGuess"
 
 const Stack = createStackNavigator();
 
@@ -42,8 +45,12 @@ const Router = () => {
         <Stack.Screen name="Vocabulary" component={VocabularyScreen}/>
         <Stack.Screen name="Definition" component={DefinitionScreen}/>
         <Stack.Screen name="GamePlay" component={GamePlayScreen}/>
-        <Stack.Screen name="Level" component={LevelScreen}/>
+        <Stack.Screen name="LevelScreen" component={LevelScreen}/>
         <Stack.Screen name="SignUp" component={SignUpScreen}/>
+        <Stack.Screen name="Micro" component={Micro}/>
+        <Stack.Screen name="ExampleForVocab" component={ExampleForVocabScreen}></Stack.Screen>
+        <Stack.Screen name="GuessTheWord" component={GuessTheWord}/>
+        <Stack.Screen name="ListenToGuess" component={ListenToGuess}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

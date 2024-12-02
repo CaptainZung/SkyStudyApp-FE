@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, ScrollView, Dimensions, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ImageBackground,
+  ScrollView,
+  Dimensions,
+  Alert,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import BottomNav from './BottomNav';
@@ -52,6 +62,14 @@ export default function HomeScreen({ route }) {
 
   return (
     <ImageBackground source={require('../../assets/images/anhnenchinh.png')} style={styles.backgroundImage}>
+      {/* Nút Micro */}
+      <TouchableOpacity
+        style={styles.microButton}
+        onPress={() => navigation.navigate('Micro')}
+      >
+        <Text style={styles.microButtonText}>Micro</Text>
+      </TouchableOpacity>
+
       <View style={styles.avatarSection}>
         <TouchableOpacity onPress={chooseImage}>
           <Image source={avatarSource ? avatarSource : require('../../assets/images/flip.png')} style={styles.avatar} />
@@ -96,17 +114,17 @@ export default function HomeScreen({ route }) {
       <View style={styles.buttonsContainer}>
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('EnglishByTopic')}>
           <Image source={require('../../assets/images/englishbytopic_icon.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>English by topic</Text>
+          <Text style={styles.buttonText}>Tiếng anh theo chủ đề</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Game')}>
           <Image source={require('../../assets/images/game_icon.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Playing Game</Text>
+          <Text style={styles.buttonText}>Chơi game</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Dictionary')}>
           <Image source={require('../../assets/images/dictionary_icon.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Your Dictionary</Text>
+          <Text style={styles.buttonText}>Từ điển của bạn</Text>
         </TouchableOpacity>
       </View>
 
@@ -120,6 +138,19 @@ const styles = StyleSheet.create({
     flex: 1,
     resizeMode: 'cover',
     justifyContent: 'center',
+  },
+  microButton: {
+    position: 'absolute',
+    top: 50, // Adjust to fit your layout
+    right: 20,
+    backgroundColor: '#1E90FF',
+    padding: 10,
+    borderRadius: 10,
+  },
+  microButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   avatarSection: {
     position: 'absolute',
