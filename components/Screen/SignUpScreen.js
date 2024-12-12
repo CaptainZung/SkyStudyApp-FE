@@ -3,8 +3,8 @@ import {
   View,
   Text,
   TextInput,
-  StyleSheet,
   TouchableOpacity,
+  StyleSheet,
   ImageBackground,
   Image,
   Alert,
@@ -17,55 +17,59 @@ export default function SignUpScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSignUp = async () => {
-    if (!phone || !username || !password) {
-      Alert.alert('Error', 'Please fill out all fields.');
-      return;
-    }
+const handleRegister = async () => {
+  if (!phone || !username || !password) {
+    Alert.alert('Thiếu thông tin', 'Hãy nhập đủ số điện thoại, tên đăng nhập và mật khẩu.');
+    return;
+  }
 
-    try {
-      const response = await fetch(`${API_URL}register/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phone, username, password }),
-      });
+  try {
+    const response = await fetch(`${API_URL}Register/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, phone, password }),
+    });
 
-      if (!response.ok) {
-        throw new Error('Registration failed.');
+    const textResponse = await response.text(); // Read the raw response
+    console.log('Raw server response:', textResponse); // Log response for debugging
+
+    if (response.ok) {
+      const data = JSON.parse(textResponse);
+      Alert.alert('Thành công', 'Đăng ký thành công! Hãy thiết lập mã PIN.');
+      navigation.navigate('EnterPin', { userId: data.user_id, username: username });
+    } else {
+      let errorMessage = 'Đăng ký không thành công.';
+      try {
+        const data = JSON.parse(textResponse);
+        errorMessage = data.error || errorMessage;
+      } catch (err) {
+        console.warn('Error response is not JSON:', err);
       }
-
-      const data = await response.json();
-      if (data.success) {
-        Alert.alert('Success', 'Registration successful!');
-        navigation.navigate('NameInputScreen'); // Redirect to NameInputScreen
-      } else {
-        Alert.alert('Error', data.message || 'Registration failed.');
-      }
-    } catch (error) {
-      console.error('Error during registration:', error);
-      Alert.alert('Error', 'Failed to register. Please try again later.');
+      Alert.alert('Lỗi', errorMessage);
     }
-  };
+  } catch (error) {
+    console.error('Error:', error);
+    Alert.alert('Lỗi', 'Không thể kết nối với server. Vui lòng thử lại sau.');
+  }
+};
+  
 
   return (
     <ImageBackground
       source={require('../../assets/images/anhnenchinh.png')}
       style={styles.backgroundImage}
     >
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Image source={require('../../assets/images/back_icon.png')} style={styles.icon} />
         </TouchableOpacity>
-        <Text style={styles.title}>Đăng kí</Text>
+        <Text style={styles.title}>Đăng ký</Text>
       </View>
 
+      {/* Form Container */}
       <View style={styles.container}>
-        <Text style={styles.title}>Tài khoản mới</Text>
+        <Text style={styles.formTitle}>Tài khoản mới</Text>
 
         <TextInput
           style={styles.input}
@@ -93,16 +97,13 @@ export default function SignUpScreen({ navigation }) {
             value={password}
             onChangeText={setPassword}
           />
-          <TouchableOpacity
-            onPress={() => setShowPassword(!showPassword)}
-            style={styles.eyeButton}
-          >
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
             <Text style={styles.eyeText}>{showPassword ? '🙉' : '🙈'}</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.signupButton} onPress={handleSignUp}>
-          <Text style={styles.signupButtonText}>Đăng Kí</Text>
+        <TouchableOpacity style={styles.signupButton} onPress={handleRegister}>
+          <Text style={styles.signupButtonText}>Đăng Ký</Text>
         </TouchableOpacity>
       </View>
     </ImageBackground>
@@ -150,6 +151,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 30,
+  },
+  formTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 20,
   },
   input: {
     width: '100%',

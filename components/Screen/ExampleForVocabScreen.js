@@ -43,6 +43,18 @@ export default function ExampleForVocabScreen({ route }) {
             />
           </View>
         )}
+
+        {/* Practice Speaking Button */}
+        <TouchableOpacity
+          style={styles.practiceButton}
+          onPress={() =>
+            navigation.navigate('PracticeSpeaking', {
+              referenceText: wordData.examples[0], // Pass the first example as reference
+            })
+          }
+        >
+          <Text style={styles.practiceButtonText}>Luyện phát âm</Text>
+        </TouchableOpacity>
       </View>
     </ImageBackground>
   );
@@ -130,5 +142,22 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover', // Ensures the image fills the container proportionally
+  },
+  practiceButton: {
+    backgroundColor: '#0080FF',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  practiceButtonText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

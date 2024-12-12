@@ -15,6 +15,7 @@ import { API_URL } from '../../scripts/apiConfig';
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // Handle regular login
   const handleLogin = async () => {
@@ -35,7 +36,7 @@ export default function LoginScreen({ navigation }) {
           Alert.alert('Đăng nhập thất bại', 'Tài khoản hoặc mật khẩu không đúng');
         }
       } catch (error) {
-        Alert.alert('Lỗi ', 'Không thể kết nối server. Vui lòng thử lại sau.');
+        Alert.alert('Lỗi', 'Không thể kết nối server. Vui lòng thử lại sau.');
       }
     } else {
       Alert.alert('Thiếu thông tin', 'Hãy nhập cả tên đăng nhập và mật khẩu.');
@@ -60,19 +61,28 @@ export default function LoginScreen({ navigation }) {
 
         <TextInput
           style={styles.input}
-          placeholder="Nhập số điện thoại"
+          placeholder="Nhập tên đăng nhập"
           value={username}
           onChangeText={setUsername}
           placeholderTextColor="gray"
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Nhập mật khấu"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          placeholderTextColor="gray"
-        />
+
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            placeholder="Nhập mật khẩu"
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+            placeholderTextColor="gray"
+          />
+          <TouchableOpacity
+            onPress={() => setShowPassword(!showPassword)}
+            style={styles.eyeButton}
+          >
+            <Text style={styles.eyeText}>{showPassword ? '🙉' : '🙈'}</Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Đăng Nhập</Text>
@@ -114,10 +124,28 @@ const styles = StyleSheet.create({
     width: '80%',
     height: 50,
     backgroundColor: '#FFF',
-    marginBottom: 20,
     paddingHorizontal: 10,
     borderRadius: 10,
     fontSize: 18,
+    marginBottom: 20,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '80%',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+  },
+  eyeButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  eyeText: {
+    fontSize: 20,
+    color: '#999',
   },
   button: {
     backgroundColor: '#1E90FF',

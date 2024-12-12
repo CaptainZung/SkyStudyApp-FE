@@ -7,7 +7,6 @@ import NameInputScreen from '../components/Screen/NameInputScreen';
 import CameraScreen from '../components/Screen/CameraScreen';
 import GameScreen from '../components/Screen/GameScreen';
 import SettingScreen from '../components/Screen/SettingScreen';
-import SendOTP from '../components/Screen/SendOTPScreen';
 import DetectionScreen from '../components/Screen/DetectionScreen';
 import { UserContext } from '../components/Screen/UserContext';
 import EnglishByTopicScreen from '../components/Screen/EnglishByTopicScreen';
@@ -19,10 +18,11 @@ import LevelScreen from '../components/Game/LevelScreen';
 import SignUpScreen from '../components/Screen/SignUpScreen';
 import Micro from '../components/Screen/Micro';
 import ExampleForVocabScreen from '../components/Screen/ExampleForVocabScreen';
-// import VerifyOTP from '../components/VerifyOTPScreen';
-// import Detection from '../components/DetectionScreen';
+// import DetectionScreen from '../components/DetectionScreen';
 import GuessTheWord from "../components/Game/GuessTheWord";
 import ListenToGuess from "../components/Game/ListenToGuess"
+import EnterPinScreen from '../components/Screen/EnterPinScreen';
+import PracticeSpeakingScreen from '../components/Screen/PracticeSpeakingScreen';
 
 const Stack = createStackNavigator();
 
@@ -51,6 +51,8 @@ const Router = () => {
         <Stack.Screen name="ExampleForVocab" component={ExampleForVocabScreen}></Stack.Screen>
         <Stack.Screen name="GuessTheWord" component={GuessTheWord}/>
         <Stack.Screen name="ListenToGuess" component={ListenToGuess}/>
+        <Stack.Screen name="EnterPin" component={EnterPinScreen}></Stack.Screen>
+        <Stack.Screen name ="PracticeSpeaking" component={PracticeSpeakingScreen}></Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );

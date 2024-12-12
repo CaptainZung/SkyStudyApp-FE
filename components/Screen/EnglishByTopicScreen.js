@@ -50,7 +50,7 @@ export default function EnglishByTopicScreen() {
           <Text style={styles.topicText}>Động vật</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Weathers')}>
+        <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Weather')}>
           <Image
             source={require('../../assets/images/weather.png')}
             style={styles.topicImage}
