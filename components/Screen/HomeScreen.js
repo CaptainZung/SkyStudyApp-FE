@@ -18,9 +18,35 @@ const screenWidth = Dimensions.get('window').width;
 
 export default function HomeScreen({ route }) {
   const navigation = useNavigation();
-  const initialUserName = route?.params?.userName ?? 'Guest'; // Get the userName from params or fallback to 'Guest'
-  const [userName, setUserName] = useState(initialUserName); // Persist userName in state
+  const initialUserName = route?.params?.userName ?? 'Guest';
+  const [userName, setUserName] = useState(initialUserName);
   const [avatarSource, setAvatarSource] = useState(null);
+  const [kpiDays, setKpiDays] = useState({
+    Mon: false,
+    Tue: false,
+    Wed: false,
+    Thu: false,
+    Fri: false,
+  });
+  const [currentDay, setCurrentDay] = useState('');
+
+  // Function to get the current day in short form
+  const getCurrentDay = () => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const today = new Date().getDay();
+    return days[today];
+  };
+
+  useEffect(() => {
+    const today = getCurrentDay(); // Get the current day
+    setCurrentDay(today);
+
+    const timer = setTimeout(() => {
+      setKpiDays((prevState) => ({ ...prevState, [today]: true })); // Tick today's day after 5 minutes
+    }, 10 * 1000); // 5 minutes
+
+    return () => clearTimeout(timer); // Clear the timer when the component unmounts
+  }, []);
 
   const chooseImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -52,7 +78,7 @@ export default function HomeScreen({ route }) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex(prevIndex => (prevIndex === banners.length - 1 ? 0 : prevIndex + 1));
+      setCurrentIndex((prevIndex) => (prevIndex === banners.length - 1 ? 0 : prevIndex + 1));
       if (scrollViewRef.current) {
         scrollViewRef.current.scrollTo({ x: screenWidth * (currentIndex + 1), animated: true });
       }
@@ -62,7 +88,6 @@ export default function HomeScreen({ route }) {
 
   return (
     <ImageBackground source={require('../../assets/images/anhnenchinh.png')} style={styles.backgroundImage}>
-      {/* Nút Micro */}
       <TouchableOpacity
         style={styles.microButton}
         onPress={() => navigation.navigate('Micro')}
@@ -104,9 +129,9 @@ export default function HomeScreen({ route }) {
       </View>
 
       <View style={styles.daysContainer}>
-        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((day) => (
-          <View key={day} style={styles.day}>
-            <Text style={styles.dayText}>{day}</Text>
+        {Object.keys(kpiDays).map((day) => (
+          <View key={day} style={[styles.day, kpiDays[day] && styles.dayCompleted]}>
+            <Text style={[styles.dayText, kpiDays[day] && styles.dayTextCompleted]}>{day}</Text>
           </View>
         ))}
       </View>
@@ -141,7 +166,7 @@ const styles = StyleSheet.create({
   },
   microButton: {
     position: 'absolute',
-    top: 50, // Adjust to fit your layout
+    top: 50,
     right: 20,
     backgroundColor: '#1E90FF',
     padding: 10,
@@ -219,9 +244,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
   },
+  dayCompleted: {
+    backgroundColor: '#4CAF50',
+  },
   dayText: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  dayTextCompleted: {
+    color: '#FFF',
   },
   buttonsContainer: {
     flexDirection: 'column',

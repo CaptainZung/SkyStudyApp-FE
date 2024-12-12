@@ -69,7 +69,7 @@ export default function LoginScreen({ navigation }) {
 
         <View style={styles.passwordContainer}>
           <TextInput
-            style={[styles.input, { flex: 1 }]}
+            style={styles.passwordInput}
             placeholder="Nhập mật khẩu"
             secureTextEntry={!showPassword}
             value={password}
@@ -133,10 +133,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '80%',
+    height: 50,
     backgroundColor: '#FFF',
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 20,
+    justifyContent: 'space-between', // Align TextInput and eye icon properly
+  },
+  passwordInput: {
+    flex: 1, // Fill available space in the container
+    fontSize: 18,
+    color: '#000',
   },
   eyeButton: {
     justifyContent: 'center',
