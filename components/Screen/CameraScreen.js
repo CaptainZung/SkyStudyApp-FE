@@ -7,6 +7,8 @@ import {
   Image,
   Text,
   SafeAreaView,
+  Animated,
+  ActivityIndicator,
 } from 'react-native';
 
 const AI_API_URL = "https://enhanced-snake-externally.ngrok-free.app/predict";
@@ -17,8 +19,8 @@ export default function CameraScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [processing, setProcessing] = useState(false);
 
-  // Reference for CameraView
   const cameraRef = useRef(null);
+  const scaleAnimation = useRef(new Animated.Value(1)).current;
 
   if (!permission) {
     return <View />;
@@ -26,15 +28,15 @@ export default function CameraScreen({ navigation }) {
 
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
+      <View style={styles.permissionContainer}>
         <Text style={styles.permissionMessage}>
-          We need your permission to show the camera
+          We need your permission to access the camera
         </Text>
         <TouchableOpacity
           onPress={requestPermission}
           style={styles.permissionButton}
         >
-          <Text style={styles.permissionButtonText}>Grant Permission</Text>
+          <Text style={styles.permissionButtonText}>Grant Camera Permission</Text>
         </TouchableOpacity>
       </View>
     );
@@ -48,20 +50,32 @@ export default function CameraScreen({ navigation }) {
     setFlash((current) => (current === 'off' ? 'on' : 'off'));
   };
 
+  const startAnimation = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnimation, {
+        toValue: 1.2,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnimation, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   const takeAndSendPicture = async () => {
     if (cameraRef.current) {
+      startAnimation();
       setProcessing(true);
 
       try {
-        // Chụp ảnh và lưu Base64
         const photo = await cameraRef.current.takePictureAsync({
           base64: true,
           quality: 0.8,
         });
 
-        console.log("Photo taken:", photo.uri);
-
-        // Gửi ảnh đến server
         const formData = new FormData();
         formData.append("file", {
           uri: photo.uri,
@@ -83,16 +97,12 @@ export default function CameraScreen({ navigation }) {
           );
         }
 
-        // Lấy kết quả từ server
         const result = await response.json();
         const { processed_image, predictions } = result;
 
-        console.log("Predictions received:", predictions);
-
-        // Điều hướng đến Detection screen với ảnh và kết quả
         navigation.navigate("Detection", {
-          image: processed_image, // Truyền ảnh Base64 đã xử lý từ server
-          predictions, // Truyền kết quả từ server
+          image: processed_image,
+          predictions,
         });
       } catch (error) {
         console.error("Error sending photo to server:", error);
@@ -108,7 +118,7 @@ export default function CameraScreen({ navigation }) {
       {/* Top Buttons */}
       <View style={styles.topButtonsContainer}>
         <TouchableOpacity
-          style={styles.topButton}
+          style={styles.roundButton}
           onPress={() => navigation.goBack()}
         >
           <Image
@@ -117,7 +127,7 @@ export default function CameraScreen({ navigation }) {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.topButton} onPress={toggleFlash}>
+        <TouchableOpacity style={styles.roundButton} onPress={toggleFlash}>
           <Image
             source={
               flash === 'off'
@@ -128,7 +138,7 @@ export default function CameraScreen({ navigation }) {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.topButton} onPress={toggleCameraFacing}>
+        <TouchableOpacity style={styles.roundButton} onPress={toggleCameraFacing}>
           <Image
             source={require('../../assets/images/flip.png')}
             style={styles.icon}
@@ -143,9 +153,9 @@ export default function CameraScreen({ navigation }) {
         facing={facing}
         flash={flash}
       >
-        {/* Processing Overlay */}
         {processing && (
           <View style={styles.processingOverlay}>
+            <ActivityIndicator size="large" color="#FFF" />
             <Text style={styles.processingText}>Processing...</Text>
           </View>
         )}
@@ -153,16 +163,18 @@ export default function CameraScreen({ navigation }) {
 
       {/* Capture Button */}
       <View style={styles.bottomButtonsContainer}>
-        <TouchableOpacity
-          style={styles.captureButton}
-          onPress={takeAndSendPicture}
-          disabled={processing}
-        >
-          <Image
-            source={require('../../assets/images/cam.png')}
-            style={styles.captureIcon}
-          />
-        </TouchableOpacity>
+        <Animated.View style={{ transform: [{ scale: scaleAnimation }] }}>
+          <TouchableOpacity
+            style={styles.captureButton}
+            onPress={takeAndSendPicture}
+            disabled={processing}
+          >
+            <Image
+              source={require('../../assets/images/cam.png')}
+              style={styles.captureIcon}
+            />
+          </TouchableOpacity>
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
@@ -171,50 +183,53 @@ export default function CameraScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1E90FF', // Blue background
+    backgroundColor: '#1E90FF',
   },
   topButtonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    marginTop: 50,
-    marginHorizontal: 10,
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingHorizontal: 20,
   },
-  topButton: {
+  roundButton: {
     width: 60,
     height: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderRadius: 30,
   },
   camera: {
     flex: 1,
-    aspectRatio: 3 / 4,
     width: '100%',
-    height: '100%',
+    marginVertical: 20,
+    borderWidth: 4,
+    borderColor: '#FFA500',
+    borderRadius: 12,
   },
   bottomButtonsContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   captureButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#1E90FF',
   },
   captureIcon: {
-    width: 50,
-    height: 50,
+    width: 60,
+    height: 60,
     resizeMode: 'contain',
   },
   icon: {
-    width: 40,
-    height: 40,
+    width: 35,
+    height: 35,
     resizeMode: 'contain',
   },
   processingOverlay: {
@@ -223,32 +238,43 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#1E90FF', // Màu xanh dương đồng nhất
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10, // Đảm bảo overlay hiển thị trên cùng
   },
   processingText: {
-    color: 'white',
-    fontSize: 24,
+    color: '#FFF',
+    fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'center', // Căn giữa ngang
-    justifyContent:'center',
+    marginTop: 10,
+  },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#1E90FF', // Nền xanh để đồng bộ với giao diện
   },
   permissionMessage: {
+    fontSize: 18,
+    color: '#FFFFFF',
     textAlign: 'center',
-    padding: 20,
-    fontSize: 16,
+    marginBottom: 20,
   },
   permissionButton: {
-    backgroundColor: '#007AFF',
-    padding: 10,
-    borderRadius: 5,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 3,
+    elevation: 5,
   },
   permissionButtonText: {
-    color: 'white',
     fontSize: 16,
+    color: '#1E90FF',
+    fontWeight: 'bold',
     textAlign: 'center',
   },
 });

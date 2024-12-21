@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 const screenWidth = Dimensions.get('window').width;
 
-export default function LevelScreen({ route, navigation }) {
+export default function MatchWordLevelScreen({ route, navigation }) {
   const { gameId } = route.params; // Nhận gameId từ navigation
 
   // Danh sách các màn chơi
@@ -26,7 +26,7 @@ export default function LevelScreen({ route, navigation }) {
   const renderLevelItem = ({ item }) => (
     <TouchableOpacity
       style={styles.levelBox}
-      onPress={() => navigation.navigate('GamePlayScreen', { levelId: item.id })}
+      onPress={() => navigation.navigate('MatchWord', { levelId: item.id })}
     >
       <Image source={item.image} style={styles.levelImage} />
     </TouchableOpacity>

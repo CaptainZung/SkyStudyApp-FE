@@ -14,12 +14,12 @@ export default function EnglishByTopicScreen() {
         throw new Error(`Failed to fetch vocabulary: ${response.status}`);
       }
       const data = await response.json();
-  
+
       if (data.error) {
         Alert.alert('Error', data.error);
         return;
       }
-  
+
       navigation.navigate('Vocabulary', { topic, words: data });
     } catch (error) {
       console.error('Error fetching vocabulary:', error);
@@ -37,34 +37,78 @@ export default function EnglishByTopicScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>TIếng anh theo chủ đề </Text>
+        <Text style={styles.title}>Tiếng Anh Theo Chủ Đề</Text>
       </View>
 
       {/* Topics Section */}
       <View style={styles.topicContainer}>
-        <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Animals')}>
-          <Image
-            source={require('../../assets/images/whale.png')}
-            style={styles.topicImage}
-          />
-          <Text style={styles.topicText}>Động vật</Text>
-        </TouchableOpacity>
+        {/* Row 1 */}
+        <View style={styles.topicRow}>
+          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Animals')}>
+            <Image
+              source={require('../../assets/images/whale.png')}
+              style={styles.topicImage}
+            />
+            <Text style={styles.topicText}>Động vật</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Weather')}>
-          <Image
-            source={require('../../assets/images/weather.png')}
-            style={styles.topicImage}
-          />
-          <Text style={styles.topicText}>Thời tiết</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Weather')}>
+            <Image
+              source={require('../../assets/images/weather.png')}
+              style={styles.topicImage}
+            />
+            <Text style={styles.topicText}>Thời tiết</Text>
+          </TouchableOpacity>
+        </View>
 
-        <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Food')}>
-          <Image
-            source={require('../../assets/images/food.png')}
-            style={styles.topicImage}
-          />
-          <Text style={styles.topicText}>Thức ăn</Text>
-        </TouchableOpacity>
+        {/* Row 2 */}
+        <View style={styles.topicRow}>
+          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Food')}>
+            <Image
+              source={require('../../assets/images/food.png')}
+              style={styles.topicImage}
+            />
+            <Text style={styles.topicText}>Thức ăn</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Family')}>
+            <Image
+              source={require('../../assets/images/family.png')}
+              style={styles.topicImage}
+            />
+            <Text style={styles.topicText}>Gia đình</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Row 3 */}
+        <View style={styles.topicRow}>
+          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Flags')}>
+            <Image
+              source={require('../../assets/images/flag.png')}
+              style={styles.topicImage}
+            />
+            <Text style={styles.topicText}>Quốc Tịch</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Emotions')}>
+            <Image
+              source={require('../../assets/images/emotion.png')}
+              style={styles.topicImage}
+            />
+            <Text style={styles.topicText}>Cảm xúc</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Row 4 */}
+        <View style={styles.topicRow}>
+          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Transport')}>
+            <Image
+              source={require('../../assets/images/transport.png')}
+              style={styles.topicImage}
+            />
+            <Text style={styles.topicText}>Phương tiện</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Bottom Navigation */}
@@ -109,21 +153,21 @@ const styles = StyleSheet.create({
   },
   topicContainer: {
     flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-evenly',
-    alignItems: 'center',
     paddingHorizontal: 10,
     marginTop: 20,
   },
+  topicRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
   topicButton: {
-    width: '40%',
+    width: '48%',
     height: 120,
     backgroundColor: '#FFF',
     borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

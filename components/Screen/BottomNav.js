@@ -7,11 +7,10 @@ export default function BottomNav({ userName, avatarSource }) {
 
   return (
     <View style={styles.navigationContainer}>
-      {/* Home Button */}
       <TouchableOpacity
         style={styles.navButton}
         onPress={() => navigation.navigate('Home', { userName, avatarSource })}
-        activeOpacity={0.8} // Add feedback on press
+        activeOpacity={0.8}
       >
         <Image
           source={require('../../assets/images/home_icon.png')}
@@ -58,7 +57,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     paddingHorizontal: 20,
-    backgroundColor: 'transparent', // Ensures nav container doesn't block background
+    backgroundColor: 'transparent',
   },
   navButton: {
     backgroundColor: '#FFF',

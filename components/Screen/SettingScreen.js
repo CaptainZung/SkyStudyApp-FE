@@ -56,7 +56,7 @@ export default function SettingScreen({ navigation, route }) {
         <View style={styles.profileSection}>
           <TouchableOpacity onPress={chooseImage}>
             <Image
-              source={avatarSource ? avatarSource : require('../../assets/images/flip.png')}
+              source={avatarSource ? avatarSource : require('../../assets/images/user.png')}
               style={styles.avatar}
             />
           </TouchableOpacity>
@@ -66,7 +66,7 @@ export default function SettingScreen({ navigation, route }) {
 
         {/* Buttons Section */}
         <View style={styles.buttonsWrapper}>
-          <TouchableOpacity style={styles.menuButton}>
+          <TouchableOpacity style={styles.menuButton} onPress={() => navigation.navigate('Profile')}>
             <Text style={styles.menuButtonText}>Thông tin cá nhân</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.menuButton}>

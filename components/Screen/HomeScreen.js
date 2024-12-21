@@ -9,6 +9,7 @@ import {
   ScrollView,
   Dimensions,
   Alert,
+  Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -22,15 +23,17 @@ export default function HomeScreen({ route }) {
   const [userName, setUserName] = useState(initialUserName);
   const [avatarSource, setAvatarSource] = useState(null);
   const [kpiDays, setKpiDays] = useState({
+    Sun: false,
     Mon: false,
     Tue: false,
     Wed: false,
     Thu: false,
     Fri: false,
+    Sat: false,
   });
   const [currentDay, setCurrentDay] = useState('');
+  const bannerScale = useRef(new Animated.Value(1)).current;
 
-  // Function to get the current day in short form
   const getCurrentDay = () => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const today = new Date().getDay();
@@ -38,14 +41,14 @@ export default function HomeScreen({ route }) {
   };
 
   useEffect(() => {
-    const today = getCurrentDay(); // Get the current day
+    const today = getCurrentDay();
     setCurrentDay(today);
 
     const timer = setTimeout(() => {
-      setKpiDays((prevState) => ({ ...prevState, [today]: true })); // Tick today's day after 5 minutes
-    }, 10 * 1000); // 5 minutes
+      setKpiDays((prevState) => ({ ...prevState, [today]: true }));
+    },30 * 60 * 1000);
 
-    return () => clearTimeout(timer); // Clear the timer when the component unmounts
+    return () => clearTimeout(timer);
   }, []);
 
   const chooseImage = async () => {
@@ -79,6 +82,18 @@ export default function HomeScreen({ route }) {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex === banners.length - 1 ? 0 : prevIndex + 1));
+      Animated.sequence([
+        Animated.timing(bannerScale, {
+          toValue: 1.1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bannerScale, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
       if (scrollViewRef.current) {
         scrollViewRef.current.scrollTo({ x: screenWidth * (currentIndex + 1), animated: true });
       }
@@ -88,21 +103,15 @@ export default function HomeScreen({ route }) {
 
   return (
     <ImageBackground source={require('../../assets/images/anhnenchinh.png')} style={styles.backgroundImage}>
-      <TouchableOpacity
-        style={styles.microButton}
-        onPress={() => navigation.navigate('Micro')}
-      >
-        <Text style={styles.microButtonText}>Micro</Text>
-      </TouchableOpacity>
+
 
       <View style={styles.avatarSection}>
         <TouchableOpacity onPress={chooseImage}>
-          <Image source={avatarSource ? avatarSource : require('../../assets/images/flip.png')} style={styles.avatar} />
+          <Image source={avatarSource ? avatarSource : require('../../assets/images/user.png')} style={styles.avatar} />
         </TouchableOpacity>
 
         <View style={styles.infoContainer}>
           <Text style={styles.greeting}>Hello {userName}</Text>
-          <Text style={styles.points}>0 points</Text>
         </View>
       </View>
 
@@ -113,17 +122,14 @@ export default function HomeScreen({ route }) {
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           style={styles.bannerContainer}
-          onScroll={(event) => {
-            const scrollPosition = event.nativeEvent.contentOffset.x;
-            const index = Math.floor(scrollPosition / screenWidth);
-            setCurrentIndex(index);
-          }}
         >
           {banners.map((banner, index) => (
-            <View key={index} style={styles.banner}>
+            <Animated.View
+              key={index}
+              style={[styles.banner, { transform: [{ scale: bannerScale }] }]}
+            >
               <Image source={banner.image} style={styles.bannerImage} />
-              <Text style={styles.bannerText}>{banner.text}</Text>
-            </View>
+            </Animated.View>
           ))}
         </ScrollView>
       </View>
@@ -137,19 +143,19 @@ export default function HomeScreen({ route }) {
       </View>
 
       <View style={styles.buttonsContainer}>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('EnglishByTopic')}>
+        <TouchableOpacity style={[styles.button, styles.blueButton]} onPress={() => navigation.navigate('EnglishByTopic')}>
           <Image source={require('../../assets/images/englishbytopic_icon.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Tiếng anh theo chủ đề</Text>
+          <Text style={styles.buttonText}>English by topic</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Game')}>
+        <TouchableOpacity style={[styles.button, styles.blueButton]} onPress={() => navigation.navigate('Game')}>
           <Image source={require('../../assets/images/game_icon.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Chơi game</Text>
+          <Text style={styles.buttonText}>Playing Game</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Dictionary')}>
+        <TouchableOpacity style={[styles.button, styles.blueButton]} onPress={() => navigation.navigate('Dictionary')}>
           <Image source={require('../../assets/images/dictionary_icon.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Từ điển của bạn</Text>
+          <Text style={styles.buttonText}>Your Dictionary</Text>
         </TouchableOpacity>
       </View>
 
@@ -168,9 +174,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50,
     right: 20,
-    backgroundColor: '#1E90FF',
+    backgroundColor: '#FF6347',
     padding: 10,
-    borderRadius: 10,
+    borderRadius: 50,
+    elevation: 5,
   },
   microButtonText: {
     color: '#FFF',
@@ -189,6 +196,8 @@ const styles = StyleSheet.create({
     height: 96,
     borderRadius: 48,
     backgroundColor: '#ccc',
+    borderWidth: 2,
+    borderColor: '#FFF',
   },
   infoContainer: {
     marginLeft: 15,
@@ -197,6 +206,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFF',
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   points: {
     fontSize: 18,
@@ -204,7 +216,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   bannerWrapper: {
-    marginTop: 90,
+    marginTop: 120,
   },
   bannerContainer: {
     height: 220,
@@ -218,41 +230,41 @@ const styles = StyleSheet.create({
   bannerImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
-  },
-  bannerText: {
-    fontSize: 18,
-    color: '#FFF',
-    position: 'absolute',
-    bottom: 10,
+    borderRadius: 10,
   },
   daysContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'row', // Căn theo hàng ngang
+    justifyContent: 'space-around', // Khoảng cách đều giữa các ngày
     alignItems: 'center',
-    width: '90%',
-    alignSelf: 'center',
-    marginTop: 20,
-    marginBottom: 30,
-    paddingHorizontal: 10,
+    width: '100%',
+    paddingHorizontal: 10, // Khoảng cách bên trong container
+    marginTop: 15,
+    marginBottom: 15,
   },
   day: {
-    width: 60,
-    height: 60,
+    width: 40, // Kích thước hình tròn
+    height: 50,
     backgroundColor: '#ddd',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 25, // Để thành hình tròn
+    elevation: 5,
+    marginHorizontal: 5, // Khoảng cách giữa các ngày
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
   dayCompleted: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#4CAF50', // Màu xanh khi hoàn thành
   },
   dayText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
+    color: '#000',
   },
   dayTextCompleted: {
-    color: '#FFF',
+    color: '#FFF', // Màu trắng khi hoàn thành
   },
   buttonsContainer: {
     flexDirection: 'column',
@@ -262,7 +274,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flexDirection: 'row',
-    backgroundColor: '#00BCD4',
+    backgroundColor: '#00BCD4', // Màu xanh
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 25,
@@ -284,5 +296,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#FFF',
     fontSize: 18,
+    fontWeight: 'bold',
   },
 });

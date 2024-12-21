@@ -82,7 +82,7 @@ const handleRegister = async () => {
 
         <TextInput
           style={styles.input}
-          placeholder="Nhập tên đăng nhập"
+          placeholder="Nhập tên tài khoản"
           placeholderTextColor="#999"
           value={username}
           onChangeText={setUsername}

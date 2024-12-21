@@ -13,16 +13,18 @@ import EnglishByTopicScreen from '../components/Screen/EnglishByTopicScreen';
 import YourDictScreen from '../components/Screen/YourDictScreen';
 import VocabularyScreen from '../components/Screen/VocabularyScreen';
 import DefinitionScreen from '../components/Screen/DefinitionScreen';
-import GamePlayScreen from '../components/Game/GamePlayScreen';
-import LevelScreen from '../components/Game/LevelScreen';
+import MatchWorldLevelScreen from '../components/Game/MatchWordLevelScreen';
+import MatchWordScreen from '../components/Game/MatchWorldScreen';
 import SignUpScreen from '../components/Screen/SignUpScreen';
-import Micro from '../components/Screen/Micro';
+
 import ExampleForVocabScreen from '../components/Screen/ExampleForVocabScreen';
 // import DetectionScreen from '../components/DetectionScreen';
 import GuessTheWord from "../components/Game/GuessTheWord";
 import ListenToGuess from "../components/Game/ListenToGuess"
 import EnterPinScreen from '../components/Screen/EnterPinScreen';
 import PracticeSpeakingScreen from '../components/Screen/PracticeSpeakingScreen';
+import ProfileScreen from '../components/Screen/ProfileScreen';
+import PronunciationCheckScreen from '../components/Screen/PronunciationCheckScreen';
 
 const Stack = createStackNavigator();
 
@@ -44,15 +46,16 @@ const Router = () => {
         <Stack.Screen name="Dictionary" component={YourDictScreen} />
         <Stack.Screen name="Vocabulary" component={VocabularyScreen}/>
         <Stack.Screen name="Definition" component={DefinitionScreen}/>
-        <Stack.Screen name="GamePlay" component={GamePlayScreen}/>
-        <Stack.Screen name="LevelScreen" component={LevelScreen}/>
+        <Stack.Screen name="MatchWordLevel" component={MatchWorldLevelScreen}/>
+        <Stack.Screen name="MatchWord" component={MatchWordScreen}/>
         <Stack.Screen name="SignUp" component={SignUpScreen}/>
-        <Stack.Screen name="Micro" component={Micro}/>
         <Stack.Screen name="ExampleForVocab" component={ExampleForVocabScreen}></Stack.Screen>
         <Stack.Screen name="GuessTheWord" component={GuessTheWord}/>
         <Stack.Screen name="ListenToGuess" component={ListenToGuess}/>
         <Stack.Screen name="EnterPin" component={EnterPinScreen}></Stack.Screen>
-        <Stack.Screen name ="PracticeSpeaking" component={PracticeSpeakingScreen}></Stack.Screen>
+        <Stack.Screen name="PracticeSpeaking" component={PracticeSpeakingScreen}></Stack.Screen>
+        <Stack.Screen name="Profile" component={ProfileScreen}></Stack.Screen>
+        <Stack.Screen name="PronunCheck" component={PronunciationCheckScreen}></Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );

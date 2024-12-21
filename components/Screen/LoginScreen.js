@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Animated,
 } from 'react-native';
 import { API_URL } from '../../scripts/apiConfig';
 
@@ -16,8 +17,23 @@ export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const titleAnimation = new Animated.Value(0);
 
-  // Handle regular login
+  // Hiệu ứng chữ SkyStudy
+  React.useEffect(() => {
+    Animated.timing(titleAnimation, {
+      toValue: 1,
+      duration: 1500,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const titleTranslateY = titleAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-100, 0], // SkyStudy sẽ di chuyển từ trên xuống
+  });
+
+  // Xử lý đăng nhập
   const handleLogin = async () => {
     if (username.trim() && password.trim()) {
       try {
@@ -43,9 +59,9 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
-  // Handle guest login
+  // Xử lý đăng nhập khách
   const handleGuestLogin = () => {
-    navigation.navigate('NameInput'); // Navigate to NameInput screen for entering a guest name
+    navigation.navigate('NameInput');
   };
 
   return (
@@ -57,7 +73,10 @@ export default function LoginScreen({ navigation }) {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <Text style={styles.title}>SkyStudy</Text>
+        {/* Hiệu ứng chữ SkyStudy */}
+        <Animated.View style={[styles.titleContainer, { transform: [{ translateY: titleTranslateY }] }]}>
+          <Text style={styles.title}>SkyStudy</Text>
+        </Animated.View>
 
         <TextInput
           style={styles.input}
@@ -114,11 +133,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  titleContainer: {
+    marginBottom: 50,
+    alignItems: 'center',
+  },
   title: {
-    fontSize: 40,
+    fontSize: 50,
     fontWeight: 'bold',
     color: '#FF6347',
-    marginBottom: 30,
+    textShadowColor: '#000',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 5,
   },
   input: {
     width: '80%',
@@ -128,6 +153,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     fontSize: 18,
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   passwordContainer: {
     flexDirection: 'row',
@@ -138,10 +168,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 20,
-    justifyContent: 'space-between', // Align TextInput and eye icon properly
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   passwordInput: {
-    flex: 1, // Fill available space in the container
+    flex: 1,
     fontSize: 18,
     color: '#000',
   },
@@ -160,6 +195,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     borderRadius: 10,
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   buttonText: {
     color: '#FFF',
@@ -182,5 +222,8 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontStyle: 'italic',
     fontWeight: 'bold',
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
 });

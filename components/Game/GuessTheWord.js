@@ -10,14 +10,18 @@ import {
   Modal,
   Dimensions,
 } from "react-native";
+import LottieView from "lottie-react-native";
+import { Audio } from "expo-av";
+import * as Animatable from "react-native-animatable";
+import * as Progress from "react-native-progress";
 import { useNavigation } from "@react-navigation/native";
 
 const screenWidth = Dimensions.get("window").width;
 
 const images = [
-  { src: require("../../assets/images/Dog.jpg"), word: "dog" },
+  { src: require("../../assets/images/Dog.png"), word: "dog" },
   { src: require("../../assets/images/Banana.png"), word: "banana" },
-  { src: require("../../assets/images/Apple.jpg"), word: "apple" },
+  { src: require("../../assets/images/Apple.png"), word: "apple" },
 ];
 
 const GuessTheWord = () => {
@@ -25,28 +29,56 @@ const GuessTheWord = () => {
   const [score, setScore] = useState(0);
   const [input, setInput] = useState("");
   const [feedback, setFeedback] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [animationFeedback, setAnimationFeedback] = useState(""); // Loại phản hồi hiện tại (correct/wrong)
+  const [gameOver, setGameOver] = useState(false);
   const navigation = useNavigation();
 
   const currentImage = images[currentIndex];
+  const animationDuration = 2000; // Thời gian chạy của animation (2 giây)
+
+  const playSound = async (type) => {
+    const sound = new Audio.Sound();
+    try {
+      if (type === "correct") {
+        await sound.loadAsync(require("../../assets/sound/correct.mp3"));
+      } else {
+        await sound.loadAsync(require("../../assets/sound/wrong.mp3"));
+      }
+      await sound.playAsync();
+    } catch (error) {
+      console.error("Error playing sound:", error);
+    }
+  };
 
   const handleCheckAnswer = () => {
-    if (input.toLowerCase() === currentImage.word.toLowerCase()) {
-      setFeedback("Chính xác!");
-      setScore(score + 1);
-      setTimeout(() => {
-        setFeedback("");
-        setInput("");
+    const isCorrect = input.toLowerCase() === currentImage.word.toLowerCase();
 
-        if (currentIndex + 1 === images.length) {
-          setShowModal(true); // Hiển thị kết quả khi hoàn thành
-        } else {
-          setCurrentIndex((prevIndex) => prevIndex + 1); // Chuyển sang hình tiếp theo
-        }
-      }, 1000);
-    } else {
-      setFeedback("Sai rồi, thử lại nhé!");
+    playSound(isCorrect ? "correct" : "wrong");
+
+    if (currentIndex + 1 === images.length) {
+      // Nếu đây là lượt cuối cùng, hiển thị modal kết thúc trò chơi
+      setAnimationFeedback(isCorrect ? "correct" : "wrong");
+      setScore(isCorrect ? score + 1 : score);
+      setGameOver(true); // Hiển thị modal kết thúc
+      return;
     }
+
+    // Nếu không phải lượt cuối, tiếp tục hiển thị modal phản hồi
+    setAnimationFeedback(isCorrect ? "correct" : "wrong");
+    setFeedback(isCorrect ? "Chính xác!" : "Sai rồi!");
+    setShowFeedbackModal(true);
+
+    setTimeout(() => {
+      setShowFeedbackModal(false); // Đóng modal phản hồi sau khi animation chạy xong
+
+      if (isCorrect) {
+        setScore(score + 1);
+        setCurrentIndex((prevIndex) => prevIndex + 1); // Tiếp tục sang hình tiếp theo
+      }
+      setInput(""); // Reset input sau mỗi lượt
+      setFeedback(""); // Reset feedback
+    }, animationDuration); // Đợi animation chạy hết
   };
 
   const resetGame = () => {
@@ -54,7 +86,8 @@ const GuessTheWord = () => {
     setScore(0);
     setInput("");
     setFeedback("");
-    setShowModal(false);
+    setShowFeedbackModal(false);
+    setGameOver(false);
   };
 
   return (
@@ -74,13 +107,21 @@ const GuessTheWord = () => {
           <Text style={styles.title}>Đoán Từ</Text>
         </View>
 
+        {/* Thanh tiến trình */}
+        <Progress.Bar
+          progress={(currentIndex + 1) / images.length}
+          width={screenWidth * 0.8}
+          color="#4FAAF5"
+          style={{ marginBottom: 20 }}
+        />
+
         {/* Điểm số */}
         <Text style={styles.score}>Điểm: {score}</Text>
 
-        {/* Ảnh với viền sát */}
-        <View style={styles.imageContainer}>
+        {/* Hình ảnh */}
+        <Animatable.View animation="bounceIn" duration={1500} style={styles.imageContainer}>
           <Image source={currentImage.src} style={styles.image} />
-        </View>
+        </Animatable.View>
 
         {/* Input */}
         <TextInput
@@ -92,42 +133,57 @@ const GuessTheWord = () => {
         />
 
         {/* Nút kiểm tra */}
-        <TouchableOpacity style={styles.button} onPress={handleCheckAnswer}>
-          <Text style={styles.buttonText}>Xác nhận</Text>
-        </TouchableOpacity>
+        <Animatable.View animation="pulse" iterationCount="infinite">
+          <TouchableOpacity style={styles.button} onPress={handleCheckAnswer}>
+            <Text style={styles.buttonText}>Xác nhận</Text>
+          </TouchableOpacity>
+        </Animatable.View>
 
-        {/* Phản hồi */}
-        <Text
-          style={[
-            styles.feedback,
-            feedback === "Chính xác!" ? styles.correct : styles.wrong,
-          ]}
-        >
-          {feedback}
-        </Text>
-
-        {/* Modal hiển thị kết quả */}
-        <Modal transparent={true} visible={showModal} animationType="fade">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalText}>🎉 Hoàn thành trò chơi!</Text>
-              <Text style={styles.modalText}>
-                Điểm của bạn: {score} / {images.length}
+        {/* Modal phản hồi */}
+        <Modal transparent={true} visible={showFeedbackModal} animationType="fade">
+          <View style={styles.modalFeedbackContainer}>
+            <View style={styles.feedbackBox}>
+              <LottieView
+                source={
+                  animationFeedback === "correct"
+                    ? require("../../assets/animations/correct.json")
+                    : require("../../assets/animations/wrong.json")
+                }
+                autoPlay
+                loop={false}
+                style={{ width: 150, height: 150 }}
+              />
+              <Text style={styles.feedbackText}>
+                {animationFeedback === "correct" ? "Chính xác!" : "Sai rồi!"}
               </Text>
-              <View style={styles.modalButtons}>
-                <TouchableOpacity style={styles.modalButton} onPress={resetGame}>
-                  <Text style={styles.modalButtonText}>Chơi lại</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.exitButton]}
-                  onPress={() => navigation.goBack()}
-                >
-                  <Text style={styles.modalButtonText}>Thoát</Text>
-                </TouchableOpacity>
-              </View>
             </View>
           </View>
         </Modal>
+
+        {/* Modal kết thúc trò chơi */}
+        {gameOver && (
+          <Modal transparent={true} visible={gameOver} animationType="fade">
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalText}>🎉 Hoàn thành trò chơi!</Text>
+                <Text style={styles.modalText}>
+                  Điểm của bạn: {score} / {images.length}
+                </Text>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={styles.modalButton} onPress={resetGame}>
+                    <Text style={styles.modalButtonText}>Chơi lại</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.exitButton]}
+                    onPress={() => navigation.goBack()}
+                  >
+                    <Text style={styles.modalButtonText}>Thoát</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        )}
       </View>
     </ImageBackground>
   );
@@ -173,21 +229,24 @@ const styles = StyleSheet.create({
   },
   score: {
     fontSize: 18,
-    marginTop: 20,
-    marginBottom: 20,
+    marginBottom: 10,
     color: "#FFF",
   },
   imageContainer: {
     borderWidth: 2,
-    borderColor: "#4FAAF5",
+    borderColor: "rgba(79, 170, 245, 0.8)",
     borderRadius: 10,
-    overflow: "hidden", // Bắt buộc để viền ôm sát hình
+    overflow: "hidden",
+    shadowColor: "#4FAAF5",
+    shadowOpacity: 0.8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
     marginBottom: 20,
   },
   image: {
     width: screenWidth * 0.8,
     height: screenWidth * 0.6,
-    resizeMode: "cover", // Đảm bảo hình ảnh lấp đầy container
+    resizeMode: "cover",
   },
   input: {
     width: "90%",
@@ -203,23 +262,34 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
-    marginBottom: 10,
   },
   buttonText: {
     color: "#FFF",
     fontSize: 16,
     fontWeight: "bold",
   },
-  feedback: {
+  modalFeedbackContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  feedbackBox: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  feedbackText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#4FAAF5",
     marginTop: 10,
-    fontSize: 16,
-    textAlign: "center",
-  },
-  correct: {
-    color: "green",
-  },
-  wrong: {
-    color: "red",
   },
   modalContainer: {
     flex: 1,

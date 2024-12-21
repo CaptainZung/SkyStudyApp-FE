@@ -19,7 +19,6 @@ export default function GamePlayScreen({ route, navigation }) {
   const [shuffledWords, setShuffledWords] = useState([]);
   const [selectedWords, setSelectedWords] = useState([]);
   const [timer, setTimer] = useState(60);
-  const [score, setScore] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
 
@@ -33,14 +32,15 @@ export default function GamePlayScreen({ route, navigation }) {
 
   useEffect(() => {
     const currentSentence = sentences[levelId];
-    setSentence(currentSentence.sentence.split(" "));
-    setShuffledWords(shuffleArray(currentSentence.sentence.split(" ")));
+    const cleanedSentence = currentSentence.sentence.trim().split(" ");
+    setSentence(cleanedSentence);
+    setShuffledWords(shuffleArray(cleanedSentence));
 
     const countdown = setInterval(() => {
       setTimer((prevTimer) => {
         if (prevTimer <= 1) {
           clearInterval(countdown);
-          handleEndGame(); // Kết thúc trò chơi khi hết giờ
+          handleEndGame();
         }
         return prevTimer - 1;
       });
@@ -49,25 +49,27 @@ export default function GamePlayScreen({ route, navigation }) {
     return () => clearInterval(countdown);
   }, [levelId]);
 
-  const shuffleArray = (array) => array.sort(() => Math.random() - 0.5);
+  const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
 
   const handleSelectWord = (word) => {
-    setSelectedWords([...selectedWords, word]);
-    setShuffledWords(shuffledWords.filter((w) => w !== word));
+    if (!selectedWords.includes(word)) {
+      setSelectedWords([...selectedWords, word]);
+      setShuffledWords((prev) => prev.filter((w) => w !== word));
+    }
   };
 
   const handleRemoveWord = (word) => {
-    setShuffledWords([...shuffledWords, word]);
-    setSelectedWords(selectedWords.filter((w) => w !== word));
+    setShuffledWords((prev) => [...prev, word]);
+    setSelectedWords((prev) => prev.filter((w) => w !== word));
   };
 
   const checkAnswer = () => {
-    const joinedSentence = selectedWords.join(" ");
-    if (joinedSentence === sentence.join(" ")) {
-      setScore(timer > 30 ? 3 : timer > 0 ? 2 : 1);
+    const joinedSentence = selectedWords.join(" ").trim(); // Kết hợp và loại bỏ khoảng trắng dư
+    const correctSentence = sentence.join(" ").trim(); // Kết hợp và loại bỏ khoảng trắng dư
+
+    if (joinedSentence === correctSentence) {
       setModalMessage("🎉 Bạn đã hoàn thành đúng câu!");
     } else {
-      setScore(0);
       setModalMessage("❌ Sai rồi! Hãy thử lại.");
     }
     setShowModal(true);
@@ -78,11 +80,14 @@ export default function GamePlayScreen({ route, navigation }) {
     setShowModal(true);
   };
 
-  const handleResetGame = () => {
+  const handleRetry = () => {
     setSelectedWords([]);
-    setShuffledWords([]);
-    setModalMessage("");
+    setShuffledWords(shuffleArray(sentence));
+    setTimer(60);
     setShowModal(false);
+  };
+
+  const handleExit = () => {
     navigation.goBack();
   };
 
@@ -92,7 +97,6 @@ export default function GamePlayScreen({ route, navigation }) {
       style={styles.backgroundImage}
     >
       <View style={styles.container}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
@@ -100,69 +104,78 @@ export default function GamePlayScreen({ route, navigation }) {
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Xếp Câu</Text>
+          <Text style={styles.title}>Nối Từ</Text>
         </View>
 
-        {/* Đồng hồ đếm ngược */}
         <View style={styles.timerContainer}>
           <Text style={styles.timerIcon}>⏰</Text>
           <Text style={styles.timerText}>{timer} Giây</Text>
         </View>
 
-        {/* Câu dịch */}
         <Text style={styles.translationText}>
           {sentences[levelId]?.translation || ""}
         </Text>
 
-        {/* Từ đã chọn */}
         <View style={styles.selectedContainer}>
-          {selectedWords.map((word, index) => (
+          {sentence.map((_, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.wordBox}
-              onPress={() => handleRemoveWord(word)}
+              style={styles.placeholderBox}
+              onPress={() =>
+                selectedWords[index] && handleRemoveWord(selectedWords[index])
+              }
+              disabled={!selectedWords[index]}
             >
-              <Text style={styles.wordText}>{word}</Text>
+              <Text style={styles.placeholderText}>
+                {selectedWords[index] || "___"}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Từ bị xáo trộn */}
-        <FlatList
-          data={shuffledWords}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.wordBox}
-              onPress={() => handleSelectWord(item)}
-            >
-              <Text style={styles.wordText}>{item}</Text>
-            </TouchableOpacity>
-          )}
-          keyExtractor={(item, index) => `${item}-${index}`}
-          numColumns={3}
-          contentContainerStyle={styles.wordList}
-        />
+        <View style={styles.wordOptionsWrapper}>
+          <FlatList
+            data={shuffledWords}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.wordBox}
+                onPress={() => handleSelectWord(item)}
+              >
+                <Text style={styles.wordText}>{item}</Text>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item, index) => `${item}-${index}`}
+            numColumns={3}
+            contentContainerStyle={styles.wordList}
+          />
 
-        {/* Nút kiểm tra */}
-        <TouchableOpacity
-          style={styles.checkButton}
-          onPress={checkAnswer}
-          disabled={timer <= 0}
-        >
-          <Text style={styles.checkButtonText}>Kiểm Tra</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.checkButtonInside}
+            onPress={checkAnswer}
+            disabled={timer <= 0}
+          >
+            <Text style={styles.checkButtonText}>Kiểm Tra</Text>
+          </TouchableOpacity>
+        </View>
 
-        {/* Modal thông báo */}
         <Modal transparent={true} visible={showModal} animationType="slide">
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalText}>{modalMessage}</Text>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={handleResetGame}
-              >
-                <Text style={styles.modalButtonText}>Thoát</Text>
-              </TouchableOpacity>
+              <View style={styles.modalButtonContainer}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.retryButton]}
+                  onPress={handleRetry}
+                >
+                  <Text style={styles.modalButtonText}>Thử lại</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.exitButton]}
+                  onPress={handleExit}
+                >
+                  <Text style={styles.modalButtonText}>Thoát</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
@@ -179,7 +192,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: "center",
+    justifyContent: "flex-start",
   },
   header: {
     flexDirection: "row",
@@ -231,33 +244,55 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 20,
   },
+  placeholderBox: {
+    borderWidth: 2,
+    borderColor: "#4FAAF5",
+    borderRadius: 5,
+    padding: 10,
+    margin: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    alignItems: "center",
+  },
+  placeholderText: {
+    fontSize: 15,
+    color: "#FFF",
+  },
+  wordOptionsWrapper: {
+    borderWidth: 2,
+    borderColor: "#FFF",
+    borderRadius: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    padding: 20,
+    marginBottom: 20,
+    alignSelf: "stretch",
+    zIndex: 1,
+    alignItems: "center",
+  },
   wordBox: {
-    backgroundColor: "#4FAAF5",
+    backgroundColor: "#FFF",
     padding: 10,
     margin: 5,
     borderRadius: 5,
     alignItems: "center",
+    justifyContent: "center",
   },
   wordText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#FFF",
+    color: "#333",
   },
   wordList: {
     paddingHorizontal: 10,
+    alignItems: "center",
   },
-  checkButton: {
+  checkButtonInside: {
     backgroundColor: "#FF6347",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
     marginTop: 20,
     alignSelf: "center",
-  },
-  checkButtonText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FFF",
+    zIndex: 1,
   },
   modalContainer: {
     flex: 1,
@@ -276,10 +311,22 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 15,
   },
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "50%",
+  },
   modalButton: {
     backgroundColor: "#4FAAF5",
     padding: 10,
     borderRadius: 5,
+    flex: 1,
+  },
+  retryButton: {
+    marginRight: 10,
+  },
+  exitButton: {
+    backgroundColor: "#FF6347",
   },
   modalButtonText: {
     color: "#FFF",

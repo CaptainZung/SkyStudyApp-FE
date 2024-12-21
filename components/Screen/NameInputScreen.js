@@ -14,10 +14,10 @@ export default function NameInput({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Enter Your Name</Text>
+      <Text style={styles.title}>Hãy nhập tên của bạn</Text>
       <TextInput
         style={styles.input}
-        placeholder="Your Name"
+        placeholder="Tên bạn là gì nèo ?"
         value={name}
         onChangeText={setName}
       />
