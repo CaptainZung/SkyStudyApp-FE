@@ -8,42 +8,41 @@ import {
   FlatList,
   Dimensions,
   ImageBackground,
+  Platform,
+  StatusBar,
 } from 'react-native';
+import Heading from '../RootLayout/Heading'; // Import Heading component
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { Audio } from 'expo-av';
-import BottomNav from './BottomNav'; // Import BottomNav component if needed
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function GameScreen() {
   const navigation = useNavigation();
-  const isFocused = useIsFocused(); // Check if the screen is currently focused
+  const isFocused = useIsFocused(); // Kiểm tra xem màn hình có đang được focus không
   const [sound, setSound] = useState();
 
-  // Function to play background music
   async function playBackgroundMusic() {
     try {
       const { sound } = await Audio.Sound.createAsync(
-        require('../../assets/sound/videoplayback.mp3') // Path to your background music file
+        require('../../assets/sound/videoplayback.mp3')
       );
       setSound(sound);
-      await sound.setIsLoopingAsync(true); // Enable looping
-      await sound.playAsync(); // Play the music
+      await sound.setIsLoopingAsync(true);
+      await sound.playAsync();
     } catch (error) {
       console.error('Error playing background music:', error);
     }
   }
 
-  // Function to stop background music
   async function stopBackgroundMusic() {
     if (sound) {
       await sound.stopAsync();
       await sound.unloadAsync();
-      setSound(null); // Clear the sound state
+      setSound(null);
     }
   }
 
-  // Play or stop the music based on screen focus
   useEffect(() => {
     if (isFocused) {
       playBackgroundMusic();
@@ -51,13 +50,11 @@ export default function GameScreen() {
       stopBackgroundMusic();
     }
 
-    // Cleanup in case the component unmounts while music is playing
     return () => {
       stopBackgroundMusic();
     };
   }, [isFocused]);
 
-  // List of games
   const games = [
     { id: '1', name: 'Game 1', image: require('../../assets/images/game1.png') },
     { id: '2', name: 'Game 2', image: require('../../assets/images/game2.png') },
@@ -67,7 +64,6 @@ export default function GameScreen() {
     { id: '6', name: 'Game 6' },
   ];
 
-  // Render each game item
   const renderGameItem = ({ item }) => {
     const navigateToGame = () => {
       switch (item.id) {
@@ -100,41 +96,20 @@ export default function GameScreen() {
 
   return (
     <ImageBackground
-      source={require('../../assets/images/anhnenchinh.png')} // Background image
+      source={require('../../assets/images/anhnenchinh.png')}
       style={styles.backgroundImage}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()} // Go back to the previous screen
-        >
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Playing Game</Text>
-      </View>
+      {/* Sử dụng Heading component */}
+      <Heading title="Playing Game" onBackPress={() => navigation.goBack()} />
 
       {/* List of games */}
       <FlatList
         data={games}
         renderItem={renderGameItem}
         keyExtractor={(item) => item.id}
-        numColumns={2} // Two buttons per row
+        numColumns={2}
         contentContainerStyle={styles.gameList}
       />
-
-      {/* Bottom Navigation */}
-      <View style={styles.navigationContainer}>
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('Home')}>
-          <Image source={require('../../assets/images/home_icon.png')} style={styles.navIcon} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={() => navigation.navigate('Camera')}>
-          <Image source={require('../../assets/images/scan_icon.png')} style={styles.navIcon} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Image source={require('../../assets/images/setting_icon.png')} style={styles.navIcon} />
-        </TouchableOpacity>
-      </View>
     </ImageBackground>
   );
 }
@@ -144,39 +119,24 @@ const styles = StyleSheet.create({
     flex: 1,
     resizeMode: 'cover',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 50,
-    paddingHorizontal: 20,
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 5,
-  },
-  backButtonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
   gameList: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
     paddingTop: 20,
+    justifyContent: 'center', // Căn giữa danh sách các game
   },
   gameBox: {
-    width: (screenWidth - 40) / 2, // Dividing the screen width into two buttons per row
-    height: ((screenWidth - 40) / 2) * (9 / 16), // Aspect ratio 16:9
+    width: (screenWidth - 50) / 2, // Đảm bảo cân bằng giữa các cột
+    height: ((screenWidth - 50) / 2) * (9 / 16),
     margin: 10,
     borderRadius: 15,
     overflow: 'hidden',
     alignSelf: 'center',
+    backgroundColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   gameImage: {
     width: '100%',
@@ -194,27 +154,5 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FFF',
-  },
-  navigationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    width: '100%',
-    position: 'absolute',
-    bottom: 20,
-    paddingHorizontal: 20,
-  },
-  navButton: {
-    backgroundColor: '#FFF',
-    padding: 10,
-    borderRadius: 50,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  navIcon: {
-    width: 48,
-    height: 48,
   },
 });

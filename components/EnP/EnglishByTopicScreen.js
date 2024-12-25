@@ -1,7 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, Alert } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ImageBackground,
+  Alert,
+  Image,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import BottomNav from './BottomNav';
+import BottomNav from '../Root/BottomNav';
+import Heading from '../RootLayout/Heading';
 import { API_URL } from '../../scripts/apiConfig';
 
 export default function EnglishByTopicScreen() {
@@ -33,18 +42,19 @@ export default function EnglishByTopicScreen() {
       style={styles.backgroundImage}
     >
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Tiếng Anh Theo Chủ Đề</Text>
-      </View>
+      <Heading
+        title="Tiếng Anh Theo Chủ Đề"
+        onBackPress={() => navigation.goBack()}
+      />
 
       {/* Topics Section */}
       <View style={styles.topicContainer}>
         {/* Row 1 */}
         <View style={styles.topicRow}>
-          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Animals')}>
+          <TouchableOpacity
+            style={styles.topicButton}
+            onPress={() => navigateToVocabulary('Animals')}
+          >
             <Image
               source={require('../../assets/images/whale.png')}
               style={styles.topicImage}
@@ -52,7 +62,10 @@ export default function EnglishByTopicScreen() {
             <Text style={styles.topicText}>Động vật</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Weather')}>
+          <TouchableOpacity
+            style={styles.topicButton}
+            onPress={() => navigateToVocabulary('Weather')}
+          >
             <Image
               source={require('../../assets/images/weather.png')}
               style={styles.topicImage}
@@ -63,7 +76,10 @@ export default function EnglishByTopicScreen() {
 
         {/* Row 2 */}
         <View style={styles.topicRow}>
-          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Food')}>
+          <TouchableOpacity
+            style={styles.topicButton}
+            onPress={() => navigateToVocabulary('Food')}
+          >
             <Image
               source={require('../../assets/images/food.png')}
               style={styles.topicImage}
@@ -71,7 +87,10 @@ export default function EnglishByTopicScreen() {
             <Text style={styles.topicText}>Thức ăn</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Family')}>
+          <TouchableOpacity
+            style={styles.topicButton}
+            onPress={() => navigateToVocabulary('Family')}
+          >
             <Image
               source={require('../../assets/images/family.png')}
               style={styles.topicImage}
@@ -82,7 +101,10 @@ export default function EnglishByTopicScreen() {
 
         {/* Row 3 */}
         <View style={styles.topicRow}>
-          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Flags')}>
+          <TouchableOpacity
+            style={styles.topicButton}
+            onPress={() => navigateToVocabulary('Flags')}
+          >
             <Image
               source={require('../../assets/images/flag.png')}
               style={styles.topicImage}
@@ -90,7 +112,10 @@ export default function EnglishByTopicScreen() {
             <Text style={styles.topicText}>Quốc Tịch</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Emotions')}>
+          <TouchableOpacity
+            style={styles.topicButton}
+            onPress={() => navigateToVocabulary('Emotions')}
+          >
             <Image
               source={require('../../assets/images/emotion.png')}
               style={styles.topicImage}
@@ -101,7 +126,10 @@ export default function EnglishByTopicScreen() {
 
         {/* Row 4 */}
         <View style={styles.topicRow}>
-          <TouchableOpacity style={styles.topicButton} onPress={() => navigateToVocabulary('Transport')}>
+          <TouchableOpacity
+            style={styles.topicButton}
+            onPress={() => navigateToVocabulary('Transport')}
+          >
             <Image
               source={require('../../assets/images/transport.png')}
               style={styles.topicImage}
@@ -121,35 +149,6 @@ const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
     resizeMode: 'cover',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#00BCD4',
-    marginTop: 20,
-  },
-  headerTitle: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 10,
-  },
-  backButtonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
   },
   topicContainer: {
     flex: 1,

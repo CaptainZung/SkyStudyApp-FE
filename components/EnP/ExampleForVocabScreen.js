@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, ImageBackground, TouchableOpacity } from 'react-native';
+import Heading from '../RootLayout/Heading'; // Import Heading component
 import { useNavigation } from '@react-navigation/native';
 
 export default function ExampleForVocabScreen({ route }) {
@@ -11,16 +12,8 @@ export default function ExampleForVocabScreen({ route }) {
       source={require('../../assets/images/anhnenchinh.png')}
       style={styles.backgroundImage}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()} // Go back to previous screen
-        >
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{wordData.word}</Text>
-      </View>
+      {/* Sử dụng Heading component */}
+      <Heading title={wordData.word} onBackPress={() => navigation.goBack()} />
 
       {/* Content */}
       <View style={styles.container}>
@@ -65,30 +58,6 @@ const styles = StyleSheet.create({
     flex: 1,
     resizeMode: 'cover',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 10, // Added padding for more spacing
-    backgroundColor: '#00BCD4',
-    marginTop: 15, // Adds space between the header and the top of the screen
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 10,
-  },
-  backButtonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
   container: {
     flex: 1,
     padding: 10,
@@ -98,8 +67,8 @@ const styles = StyleSheet.create({
   word: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#FFD700', // Yellow color for the word
-    marginBottom: 10, // Adds spacing below the word
+    color: '#FFD700', // Màu vàng cho từ vựng
+    marginBottom: 10,
     textAlign: 'center',
   },
   translation: {
@@ -128,9 +97,9 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '90%',
-    height: 300, // Fixed height for the image container
+    height: 300, // Chiều cao cố định cho khung ảnh
     borderRadius: 15,
-    overflow: 'hidden', // Ensures the image fits within the frame
+    overflow: 'hidden',
     backgroundColor: '#FFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -141,7 +110,7 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover', // Ensures the image fills the container proportionally
+    resizeMode: 'cover', // Đảm bảo ảnh vừa với khung hình
   },
   practiceButton: {
     backgroundColor: '#0080FF',

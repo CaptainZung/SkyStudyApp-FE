@@ -12,7 +12,13 @@ import {
 export default function DetectionScreen({ route, navigation }) {
   const { image, predictions } = route.params;
 
-  // Hàm xử lý khi nhấn vào item trong danh sách
+  // Remove duplicate words
+  const uniquePredictions = predictions.filter(
+    (item, index, self) =>
+      index === self.findIndex((t) => t.label === item.label)
+  );
+
+  // Handle item press
   const handlePress = (item) => {
     navigation.navigate('PronunCheck', { word: item.label });
   };
@@ -20,7 +26,7 @@ export default function DetectionScreen({ route, navigation }) {
   const renderPrediction = ({ item }) => (
     <TouchableOpacity
       style={styles.predictionItem}
-      onPress={() => handlePress(item)} // Bắt sự kiện nhấn
+      onPress={() => handlePress(item)} // Handle touch events
     >
       <View>
         <Text style={styles.label}>{item.label}</Text>
@@ -31,7 +37,7 @@ export default function DetectionScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Hiển thị hình ảnh */}
+      {/* Display Image */}
       <View style={styles.imageContainer}>
         <Image
           source={{ uri: `data:image/jpeg;base64,${image}` }}
@@ -39,15 +45,15 @@ export default function DetectionScreen({ route, navigation }) {
         />
       </View>
 
-      {/* Danh sách dự đoán */}
+      {/* Predictions List */}
       <FlatList
-        data={predictions}
+        data={uniquePredictions} // Use deduplicated list
         keyExtractor={(item, index) => index.toString()}
         renderItem={renderPrediction}
         contentContainerStyle={styles.predictionList}
       />
 
-      {/* Nút Back */}
+      {/* Back Button */}
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}

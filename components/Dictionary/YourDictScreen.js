@@ -8,34 +8,59 @@ import {
   Image,
   ImageBackground,
   ScrollView,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
-import BottomNav from './BottomNav';
+import axios from 'axios'; // Sử dụng axios để gọi API
+import BottomNav from '../Root/BottomNav';
 
 export default function YourDictionary() {
   const navigation = useNavigation();
-  const [dictionary, setDictionary] = useState([]); // State to store words in dictionary
-  const [isFlipped, setIsFlipped] = useState({}); // Track flip status of flashcards
+  const [dictionary, setDictionary] = useState([]); // State để lưu từ điển
+  const [isFlipped, setIsFlipped] = useState({}); // Theo dõi trạng thái lật thẻ
+  const [loading, setLoading] = useState({}); // Theo dõi trạng thái loading của mỗi từ
 
-  // Load saved words from AsyncStorage
+  // Hàm tải dữ liệu từ điển từ AsyncStorage
   const loadDictionary = async () => {
     try {
       const storedWords = await AsyncStorage.getItem('dictionary');
       const words = storedWords ? JSON.parse(storedWords) : [];
       setDictionary(words);
     } catch (error) {
-      console.error('Error loading dictionary:', error);
+      console.error('Lỗi khi tải từ điển:', error);
     }
   };
 
+  // Tải lại từ điển khi màn hình được focus
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', loadDictionary); // Reload dictionary when screen is focused
+    const unsubscribe = navigation.addListener('focus', loadDictionary);
     return unsubscribe;
   }, [navigation]);
 
-  const handleWordClick = (index) => {
-    setIsFlipped((prev) => ({ ...prev, [index]: !prev[index] }));
+  // Hàm dịch từ
+  const translateWord = async (word, index) => {
+    setLoading((prev) => ({ ...prev, [index]: true })); // Hiển thị loading
+    try {
+      const response = await axios.post(
+        'https://translation.googleapis.com/language/translate/v2',
+        {
+          q: word,
+          source: 'en',
+          target: 'vi',
+          key: 'YOUR_GOOGLE_TRANSLATE_API_KEY',
+        }
+      );
+      const translatedText = response.data.data.translations[0].translatedText;
+
+      // Lật thẻ và cập nhật từ dịch
+      setIsFlipped((prev) => ({ ...prev, [index]: translatedText }));
+    } catch (error) {
+      console.error('Lỗi khi dịch từ:', error);
+    } finally {
+      setLoading((prev) => ({ ...prev, [index]: false })); // Ẩn loading
+    }
   };
 
   return (
@@ -47,14 +72,14 @@ export default function YourDictionary() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()} // Go back to the previous screen
+          onPress={() => navigation.goBack()}
         >
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Từ điển của bạn</Text>
       </View>
 
-      {/* Search Section */}
+      {/* Phần tìm kiếm */}
       <View style={styles.searchSection}>
         <TextInput
           style={styles.searchInput}
@@ -69,24 +94,30 @@ export default function YourDictionary() {
         </TouchableOpacity>
       </View>
 
-      {/* Word List */}
+      {/* Danh sách từ */}
       <ScrollView contentContainerStyle={styles.wordList}>
         {dictionary.map((word, index) => (
           <TouchableOpacity
             key={index}
             style={styles.flashcard}
-            onPress={() => handleWordClick(index)}
+            onPress={() =>
+              isFlipped[index]
+                ? setIsFlipped((prev) => ({ ...prev, [index]: false }))
+                : translateWord(word.english, index)
+            }
           >
-            {isFlipped[index] ? (
-              <Text style={styles.flashcardText}>{word.vietnamese}</Text>
+            {loading[index] ? (
+              <ActivityIndicator size="small" color="#FFF" />
             ) : (
-              <Text style={styles.flashcardText}>{word.english}</Text>
+              <Text style={styles.flashcardText}>
+                {isFlipped[index] ? isFlipped[index] : word.english}
+              </Text>
             )}
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      {/* Bottom Navigation */}
+      {/* Thanh điều hướng dưới */}
       <BottomNav />
     </ImageBackground>
   );
@@ -100,17 +131,20 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 50,
+    backgroundColor: '#00BCD4',
     paddingHorizontal: 20,
+    paddingVertical: 10,
+    paddingTop: Platform.OS === 'android' ? 40 : 60,
+    width: '100%',
   },
   backButton: {
     marginRight: 10,
-    padding: 5,
+    padding: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 5,
+    borderRadius: 10,
   },
   backButtonText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#FFF',
   },

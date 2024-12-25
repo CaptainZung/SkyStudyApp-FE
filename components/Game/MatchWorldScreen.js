@@ -9,6 +9,7 @@ import {
   ImageBackground,
   Modal,
 } from "react-native";
+import Heading from "../RootLayout/Heading"; // Import Heading component
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -64,8 +65,8 @@ export default function GamePlayScreen({ route, navigation }) {
   };
 
   const checkAnswer = () => {
-    const joinedSentence = selectedWords.join(" ").trim(); // Kết hợp và loại bỏ khoảng trắng dư
-    const correctSentence = sentence.join(" ").trim(); // Kết hợp và loại bỏ khoảng trắng dư
+    const joinedSentence = selectedWords.join(" ").trim();
+    const correctSentence = sentence.join(" ").trim();
 
     if (joinedSentence === correctSentence) {
       setModalMessage("🎉 Bạn đã hoàn thành đúng câu!");
@@ -97,25 +98,21 @@ export default function GamePlayScreen({ route, navigation }) {
       style={styles.backgroundImage}
     >
       <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Nối Từ</Text>
-        </View>
+        {/* Heading */}
+        <Heading title="Nối Từ" onBackPress={() => navigation.goBack()} />
 
+        {/* Timer */}
         <View style={styles.timerContainer}>
           <Text style={styles.timerIcon}>⏰</Text>
           <Text style={styles.timerText}>{timer} Giây</Text>
         </View>
 
+        {/* Translation */}
         <Text style={styles.translationText}>
           {sentences[levelId]?.translation || ""}
         </Text>
 
+        {/* Selected Words */}
         <View style={styles.selectedContainer}>
           {sentence.map((_, index) => (
             <TouchableOpacity
@@ -133,6 +130,7 @@ export default function GamePlayScreen({ route, navigation }) {
           ))}
         </View>
 
+        {/* Word Options */}
         <View style={styles.wordOptionsWrapper}>
           <FlatList
             data={shuffledWords}
@@ -158,6 +156,7 @@ export default function GamePlayScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
 
+        {/* Modal */}
         <Modal transparent={true} visible={showModal} animationType="slide">
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
@@ -191,29 +190,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 20,
-    justifyContent: "flex-start",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 50,
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 5,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    borderRadius: 5,
-  },
-  backButtonText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#FFF",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFF",
   },
   timerContainer: {
     flexDirection: "row",
@@ -264,8 +240,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.3)",
     padding: 20,
     marginBottom: 20,
-    alignSelf: "stretch",
-    zIndex: 1,
     alignItems: "center",
   },
   wordBox: {
@@ -283,7 +257,6 @@ const styles = StyleSheet.create({
   },
   wordList: {
     paddingHorizontal: 10,
-    alignItems: "center",
   },
   checkButtonInside: {
     backgroundColor: "#FF6347",
@@ -292,7 +265,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 20,
     alignSelf: "center",
-    zIndex: 1,
   },
   modalContainer: {
     flex: 1,

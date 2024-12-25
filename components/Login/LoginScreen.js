@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,15 +12,18 @@ import {
   Animated,
 } from 'react-native';
 import { API_URL } from '../../scripts/apiConfig';
+import { StatusBar } from 'expo-status-bar';
+import { Audio } from 'expo-av'; // Import thư viện Audio
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const titleAnimation = new Animated.Value(0);
+  const [sound, setSound] = useState();
 
   // Hiệu ứng chữ SkyStudy
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.timing(titleAnimation, {
       toValue: 1,
       duration: 1500,
@@ -28,10 +31,41 @@ export default function LoginScreen({ navigation }) {
     }).start();
   }, []);
 
+  // Hiệu ứng chữ SkyStudy dịch chuyển
   const titleTranslateY = titleAnimation.interpolate({
     inputRange: [0, 1],
     outputRange: [-100, 0], // SkyStudy sẽ di chuyển từ trên xuống
   });
+
+  // Hàm phát nhạc nền
+  async function playBackgroundMusic() {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require('../../assets/sound/videoplayback.mp3') // Đường dẫn tới tệp nhạc nền
+      );
+      setSound(sound);
+      await sound.setIsLoopingAsync(true); // Bật chế độ lặp
+      await sound.playAsync(); // Phát nhạc
+    } catch (error) {
+      console.error('Error playing background music:', error);
+    }
+  }
+
+  // Hàm ngừng phát nhạc khi chuyển sang màn hình khác
+  async function stopBackgroundMusic() {
+    if (sound) {
+      await sound.stopAsync();
+      await sound.unloadAsync();
+    }
+  }
+
+  // Phát nhạc khi màn hình được render
+  useEffect(() => {
+    playBackgroundMusic();
+    return () => {
+      stopBackgroundMusic();
+    };
+  }, []);
 
   // Xử lý đăng nhập
   const handleLogin = async () => {
@@ -47,6 +81,7 @@ export default function LoginScreen({ navigation }) {
 
         if (response.ok) {
           const data = await response.json();
+          stopBackgroundMusic(); // Dừng nhạc khi chuyển màn hình
           navigation.navigate('Home', { userName: username });
         } else {
           Alert.alert('Đăng nhập thất bại', 'Tài khoản hoặc mật khẩu không đúng');
@@ -61,6 +96,7 @@ export default function LoginScreen({ navigation }) {
 
   // Xử lý đăng nhập khách
   const handleGuestLogin = () => {
+    stopBackgroundMusic(); // Dừng nhạc khi chuyển màn hình
     navigation.navigate('NameInput');
   };
 
@@ -69,6 +105,7 @@ export default function LoginScreen({ navigation }) {
       source={require('../../assets/images/anhnen.jpg')}
       style={styles.backgroundImage}
     >
+      <StatusBar hidden />
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

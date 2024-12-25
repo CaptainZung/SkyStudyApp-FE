@@ -14,6 +14,7 @@ import LottieView from "lottie-react-native";
 import { Audio } from "expo-av";
 import * as Animatable from "react-native-animatable";
 import * as Progress from "react-native-progress";
+import Heading from "../RootLayout/Heading"; // Import Heading component
 import { useNavigation } from "@react-navigation/native";
 
 const screenWidth = Dimensions.get("window").width;
@@ -30,21 +31,21 @@ const GuessTheWord = () => {
   const [input, setInput] = useState("");
   const [feedback, setFeedback] = useState("");
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [animationFeedback, setAnimationFeedback] = useState(""); // Loại phản hồi hiện tại (correct/wrong)
+  const [animationFeedback, setAnimationFeedback] = useState("");
   const [gameOver, setGameOver] = useState(false);
   const navigation = useNavigation();
 
   const currentImage = images[currentIndex];
-  const animationDuration = 2000; // Thời gian chạy của animation (2 giây)
+  const animationDuration = 2000;
 
   const playSound = async (type) => {
     const sound = new Audio.Sound();
     try {
-      if (type === "correct") {
-        await sound.loadAsync(require("../../assets/sound/correct.mp3"));
-      } else {
-        await sound.loadAsync(require("../../assets/sound/wrong.mp3"));
-      }
+      const soundFile =
+        type === "correct"
+          ? require("../../assets/sound/correct.mp3")
+          : require("../../assets/sound/wrong.mp3");
+      await sound.loadAsync(soundFile);
       await sound.playAsync();
     } catch (error) {
       console.error("Error playing sound:", error);
@@ -53,32 +54,28 @@ const GuessTheWord = () => {
 
   const handleCheckAnswer = () => {
     const isCorrect = input.toLowerCase() === currentImage.word.toLowerCase();
-
     playSound(isCorrect ? "correct" : "wrong");
 
     if (currentIndex + 1 === images.length) {
-      // Nếu đây là lượt cuối cùng, hiển thị modal kết thúc trò chơi
       setAnimationFeedback(isCorrect ? "correct" : "wrong");
       setScore(isCorrect ? score + 1 : score);
-      setGameOver(true); // Hiển thị modal kết thúc
+      setGameOver(true);
       return;
     }
 
-    // Nếu không phải lượt cuối, tiếp tục hiển thị modal phản hồi
     setAnimationFeedback(isCorrect ? "correct" : "wrong");
     setFeedback(isCorrect ? "Chính xác!" : "Sai rồi!");
     setShowFeedbackModal(true);
 
     setTimeout(() => {
-      setShowFeedbackModal(false); // Đóng modal phản hồi sau khi animation chạy xong
-
+      setShowFeedbackModal(false);
       if (isCorrect) {
         setScore(score + 1);
-        setCurrentIndex((prevIndex) => prevIndex + 1); // Tiếp tục sang hình tiếp theo
+        setCurrentIndex((prevIndex) => prevIndex + 1);
       }
-      setInput(""); // Reset input sau mỗi lượt
-      setFeedback(""); // Reset feedback
-    }, animationDuration); // Đợi animation chạy hết
+      setInput("");
+      setFeedback("");
+    }, animationDuration);
   };
 
   const resetGame = () => {
@@ -95,18 +92,10 @@ const GuessTheWord = () => {
       source={require("../../assets/images/anhnenchinh.png")}
       style={styles.backgroundImage}
     >
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Đoán Từ</Text>
-        </View>
+      {/* Heading được thay thế */}
+      <Heading title="Đoán Từ" onBackPress={() => navigation.goBack()} />
 
+      <View style={styles.container}>
         {/* Thanh tiến trình */}
         <Progress.Bar
           progress={(currentIndex + 1) / images.length}
@@ -199,33 +188,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 50,
-    paddingHorizontal: 20,
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 5,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    borderRadius: 5,
-  },
-  backButtonText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#FFF",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFF",
   },
   score: {
     fontSize: 18,

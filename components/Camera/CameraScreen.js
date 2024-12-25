@@ -10,12 +10,13 @@ import {
   Animated,
   ActivityIndicator,
 } from 'react-native';
+import LoadingPopup from '../Root/LoadingPopup'; // Import the loading popup component
 
 const AI_API_URL = "https://enhanced-snake-externally.ngrok-free.app/predict";
 
 export default function CameraScreen({ navigation }) {
   const [facing, setFacing] = useState('back'); // 'back' or 'front'
-  const [flash, setFlash] = useState('off'); // 'on' or 'off'
+  const [flash, setFlash] = useState('off'); // 'torch' or 'off'
   const [permission, requestPermission] = useCameraPermissions();
   const [processing, setProcessing] = useState(false);
 
@@ -46,8 +47,8 @@ export default function CameraScreen({ navigation }) {
     setFacing((current) => (current === 'back' ? 'front' : 'back'));
   };
 
-  const toggleFlash = () => {
-    setFlash((current) => (current === 'off' ? 'on' : 'off'));
+  const toggleTorch = () => {
+    setFlash((current) => (current === 'off' ? 'torch' : 'off'));
   };
 
   const startAnimation = () => {
@@ -115,7 +116,7 @@ export default function CameraScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Top Buttons */}
+      <LoadingPopup visible={processing} />
       <View style={styles.topButtonsContainer}>
         <TouchableOpacity
           style={styles.roundButton}
@@ -127,16 +128,6 @@ export default function CameraScreen({ navigation }) {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.roundButton} onPress={toggleFlash}>
-          <Image
-            source={
-              flash === 'off'
-                ? require('../../assets/images/flashoff.png')
-                : require('../../assets/images/flashon.png')
-            }
-            style={styles.icon}
-          />
-        </TouchableOpacity>
 
         <TouchableOpacity style={styles.roundButton} onPress={toggleCameraFacing}>
           <Image
@@ -146,12 +137,11 @@ export default function CameraScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Camera View */}
       <CameraView
         ref={cameraRef}
         style={styles.camera}
         facing={facing}
-        flash={flash}
+        flashMode={flash}
       >
         {processing && (
           <View style={styles.processingOverlay}>
@@ -161,7 +151,6 @@ export default function CameraScreen({ navigation }) {
         )}
       </CameraView>
 
-      {/* Capture Button */}
       <View style={styles.bottomButtonsContainer}>
         <Animated.View style={{ transform: [{ scale: scaleAnimation }] }}>
           <TouchableOpacity
@@ -228,8 +217,8 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   icon: {
-    width: 35,
-    height: 35,
+    width: 45,
+    height: 45,
     resizeMode: 'contain',
   },
   processingOverlay: {
@@ -252,7 +241,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1E90FF', // Nền xanh để đồng bộ với giao diện
+    backgroundColor: '#1E90FF',
   },
   permissionMessage: {
     fontSize: 18,

@@ -1,30 +1,36 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import BottomNav from './BottomNav';
+import BottomNav from '../Root/BottomNav';
+import { useAvatar } from '../Root/AvatarContext';
 
 export default function SettingScreen({ navigation, route }) {
+  const { avatarSource, setAvatarSource } = useAvatar(); // Use Avatar from context
+
   // Safely extract `userName` and provide a default value
   const initialUserName = route?.params?.userName ?? 'Guest';
   const [userName, setUserName] = useState(initialUserName);
-  const [avatarSource, setAvatarSource] = useState(null); // Avatar state
 
   const chooseImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted === false) {
-      Alert.alert('Permission Denied', 'You need to allow access to your media library to use this feature.');
-      return;
-    }
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission Denied', 'You need to allow access to your media library to use this feature.');
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
 
-    if (!result.canceled) {
-      setAvatarSource({ uri: result.assets[0].uri });
+      if (!result.canceled) {
+        setAvatarSource({ uri: result.assets[0].uri }); // Update avatar in context
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while selecting the image.');
     }
   };
 

@@ -10,6 +10,7 @@ import {
   Animated,
   Dimensions,
 } from "react-native";
+import Heading from "../RootLayout/Heading"; // Import Heading component
 import { Audio } from "expo-av"; // Thư viện âm thanh từ expo-av
 
 const screenWidth = Dimensions.get("window").width;
@@ -116,18 +117,10 @@ const Game = ({ navigation }) => {
       source={require("../../assets/images/anhnenchinh.png")}
       style={styles.backgroundImage}
     >
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Nghe và Chọn Đáp Án</Text>
-        </View>
+      {/* Heading được thay thế */}
+      <Heading title="Nghe và Chọn Đáp Án" onBackPress={() => navigation.goBack()} />
 
+      <View style={styles.container}>
         {/* Ghi chú */}
         <Text style={styles.instructionText}>
           Hãy nghe đoạn ghi âm và chọn những đáp án đúng

@@ -1,14 +1,15 @@
 import React from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
   FlatList,
   Dimensions,
   Image,
   ImageBackground,
+  StyleSheet,
+  TouchableOpacity,
 } from 'react-native';
+import Heading from '../RootLayout/Heading'; // Import Heading component
+
 const screenWidth = Dimensions.get('window').width;
 
 export default function MatchWordLevelScreen({ route, navigation }) {
@@ -37,16 +38,8 @@ export default function MatchWordLevelScreen({ route, navigation }) {
       source={require('../../assets/images/anhnenchinh.png')}
       style={styles.backgroundImage}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()} // Quay về màn hình trước
-        >
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Chọn Màn Chơi</Text>
-      </View>
+      {/* Header được thay thế bằng Heading */}
+      <Heading title="Chọn Màn Chơi" onBackPress={() => navigation.goBack()} />
 
       {/* Danh sách các màn chơi */}
       <FlatList
@@ -65,28 +58,6 @@ const styles = StyleSheet.create({
     flex: 1,
     resizeMode: 'cover',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 50,
-    paddingHorizontal: 20,
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 5,
-  },
-  backButtonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
   levelList: {
     paddingHorizontal: 20,
     paddingTop: 20,
@@ -100,6 +71,6 @@ const styles = StyleSheet.create({
     width: screenWidth / 2.5, // Đặt kích thước hình ảnh theo nhu cầu
     height: screenWidth / 3, // Tỉ lệ phù hợp
     resizeMode: 'contain', // Đảm bảo hình ảnh giữ nguyên tỉ lệ
-    borderRadius: 30,
-},
+    borderRadius: 15,
+  },
 });

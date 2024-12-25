@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, createContext, useContext } from 'react';
 import {
   View,
   Text,
@@ -13,15 +13,28 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import BottomNav from './BottomNav';
+import BottomNav from '../Root/BottomNav';
+import { useAvatar } from '../Root/AvatarContext';
 
+// Context for Avatar
+const AvatarContext = createContext();
+
+export const AvatarProvider = ({ children }) => {
+  const [avatarSource, setAvatarSource] = useState(null);
+
+  return (
+    <AvatarContext.Provider value={{ avatarSource, setAvatarSource }}>
+      {children}
+    </AvatarContext.Provider>
+  );
+};
 const screenWidth = Dimensions.get('window').width;
 
 export default function HomeScreen({ route }) {
   const navigation = useNavigation();
+  const { avatarSource, setAvatarSource } = useAvatar();
   const initialUserName = route?.params?.userName ?? 'Guest';
-  const [userName, setUserName] = useState(initialUserName);
-  const [avatarSource, setAvatarSource] = useState(null);
+  const [userName] = useState(initialUserName);
   const [kpiDays, setKpiDays] = useState({
     Sun: false,
     Mon: false,
@@ -34,42 +47,50 @@ export default function HomeScreen({ route }) {
   const [currentDay, setCurrentDay] = useState('');
   const bannerScale = useRef(new Animated.Value(1)).current;
 
+  // Get the current day of the week
   const getCurrentDay = () => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const today = new Date().getDay();
     return days[today];
   };
 
+  // Update the current day and set KPI completion
   useEffect(() => {
     const today = getCurrentDay();
     setCurrentDay(today);
 
     const timer = setTimeout(() => {
       setKpiDays((prevState) => ({ ...prevState, [today]: true }));
-    },30 * 60 * 1000);
+    }, 30 * 60 * 1000); // 30 minutes
 
     return () => clearTimeout(timer);
   }, []);
 
+  // Image picker for choosing avatar
   const chooseImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted === false) {
-      Alert.alert('Permission Denied', 'You need to allow access to your media library to use this feature.');
-      return;
-    }
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Permission Denied', 'You need to allow access to your media library to use this feature.');
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
 
-    if (!result.canceled) {
-      setAvatarSource({ uri: result.assets[0].uri });
+      if (!result.canceled) {
+        setAvatarSource({ uri: result.assets[0].uri });
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while selecting the image.');
     }
   };
 
+  // Banner images and auto-scroll logic
   const banners = [
     { image: require('../../assets/images/banner1.jpg') },
     { image: require('../../assets/images/banner2.jpg') },
@@ -103,8 +124,7 @@ export default function HomeScreen({ route }) {
 
   return (
     <ImageBackground source={require('../../assets/images/anhnenchinh.png')} style={styles.backgroundImage}>
-
-
+      {/* Avatar Section */}
       <View style={styles.avatarSection}>
         <TouchableOpacity onPress={chooseImage}>
           <Image source={avatarSource ? avatarSource : require('../../assets/images/user.png')} style={styles.avatar} />
@@ -115,6 +135,7 @@ export default function HomeScreen({ route }) {
         </View>
       </View>
 
+      {/* Banner Section */}
       <View style={styles.bannerWrapper}>
         <ScrollView
           ref={scrollViewRef}
@@ -134,6 +155,7 @@ export default function HomeScreen({ route }) {
         </ScrollView>
       </View>
 
+      {/* KPI Days Section */}
       <View style={styles.daysContainer}>
         {Object.keys(kpiDays).map((day) => (
           <View key={day} style={[styles.day, kpiDays[day] && styles.dayCompleted]}>
@@ -142,6 +164,7 @@ export default function HomeScreen({ route }) {
         ))}
       </View>
 
+      {/* Buttons Section */}
       <View style={styles.buttonsContainer}>
         <TouchableOpacity style={[styles.button, styles.blueButton]} onPress={() => navigation.navigate('EnglishByTopic')}>
           <Image source={require('../../assets/images/englishbytopic_icon.png')} style={styles.buttonIcon} />
@@ -170,20 +193,6 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
     justifyContent: 'center',
   },
-  microButton: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    backgroundColor: '#FF6347',
-    padding: 10,
-    borderRadius: 50,
-    elevation: 5,
-  },
-  microButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
   avatarSection: {
     position: 'absolute',
     top: 50,
@@ -210,11 +219,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
-  points: {
-    fontSize: 18,
-    color: '#FFF',
-    marginTop: 5,
-  },
   bannerWrapper: {
     marginTop: 120,
   },
@@ -233,30 +237,30 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   daysContainer: {
-    flexDirection: 'row', // Căn theo hàng ngang
-    justifyContent: 'space-around', // Khoảng cách đều giữa các ngày
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     alignItems: 'center',
     width: '100%',
-    paddingHorizontal: 10, // Khoảng cách bên trong container
+    paddingHorizontal: 10,
     marginTop: 15,
     marginBottom: 15,
   },
   day: {
-    width: 40, // Kích thước hình tròn
+    width: 40,
     height: 50,
     backgroundColor: '#ddd',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 25, // Để thành hình tròn
+    borderRadius: 25,
     elevation: 5,
-    marginHorizontal: 5, // Khoảng cách giữa các ngày
+    marginHorizontal: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
   },
   dayCompleted: {
-    backgroundColor: '#4CAF50', // Màu xanh khi hoàn thành
+    backgroundColor: '#4CAF50',
   },
   dayText: {
     fontSize: 14,
@@ -264,7 +268,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   dayTextCompleted: {
-    color: '#FFF', // Màu trắng khi hoàn thành
+    color: '#FFF',
   },
   buttonsContainer: {
     flexDirection: 'column',
@@ -274,7 +278,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flexDirection: 'row',
-    backgroundColor: '#00BCD4', // Màu xanh
+    backgroundColor: '#00BCD4',
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 25,

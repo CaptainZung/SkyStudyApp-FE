@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
   TextInput,
   ImageBackground,
   Alert,
+  Text,
 } from 'react-native';
-import BottomNav from './BottomNav';
+import BottomNav from '../Root/BottomNav';
+import Heading from '../RootLayout/Heading'; // Import Heading
 import { useNavigation } from '@react-navigation/native';
 import { API_URL } from '../../scripts/apiConfig';
 
@@ -20,14 +21,14 @@ export default function VocabularyScreen({ route }) {
   const navigation = useNavigation();
 
   useEffect(() => {
-    // Initialize and sort the word list alphabetically
+    // Sắp xếp danh sách từ theo thứ tự bảng chữ cái khi khởi tạo
     const sortedWords = [...words].sort((a, b) => a.word.localeCompare(b.word));
     setFilteredWords(sortedWords);
   }, [words]);
 
   const handleSearch = (text) => {
     setSearchText(text);
-    // Filter the word list based on search text
+    // Lọc danh sách từ theo nội dung tìm kiếm
     const filtered = words.filter((item) =>
       item.word.toLowerCase().includes(text.toLowerCase())
     );
@@ -38,20 +39,20 @@ export default function VocabularyScreen({ route }) {
     try {
       const response = await fetch(`${API_URL}Topic/${topic}/${word}/`);
       if (!response.ok) {
-        throw new Error(`Failed to fetch details for word: ${response.status}`);
+        throw new Error(`Không thể lấy chi tiết cho từ: ${response.status}`);
       }
       const data = await response.json();
 
       if (data.error) {
-        Alert.alert('Error', data.error);
+        Alert.alert('Lỗi', data.error);
         return;
       }
 
-      // Navigate to ExampleForVocabScreen with word details
+      // Điều hướng đến màn hình ExampleForVocabScreen với thông tin từ vựng
       navigation.navigate('ExampleForVocab', { wordData: data });
     } catch (error) {
-      console.error('Error fetching word details:', error);
-      Alert.alert('Error', 'Failed to load word details. Please try again later.');
+      console.error('Lỗi khi tải chi tiết từ vựng:', error);
+      Alert.alert('Lỗi', 'Không thể tải chi tiết từ. Vui lòng thử lại sau.');
     }
   };
 
@@ -60,30 +61,25 @@ export default function VocabularyScreen({ route }) {
       source={require('../../assets/images/anhnenchinh.png')}
       style={styles.backgroundImage}
     >
-      {/* Header Section */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>{topic}</Text>
-      </View>
+      {/* Sử dụng Heading thay vì header cũ */}
+      <Heading title={topic} onBackPress={() => navigation.goBack()} />
 
-      {/* Search Bar */}
+      {/* Thanh tìm kiếm */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
           placeholder="Tìm kiếm"
           placeholderTextColor="#999"
           value={searchText}
-          onChangeText={handleSearch} // Trigger search on text change
+          onChangeText={handleSearch} // Gọi hàm tìm kiếm khi thay đổi nội dung
         />
         <Text style={styles.searchIcon}>🔍</Text>
       </View>
 
-      {/* Word List */}
+      {/* Danh sách từ vựng */}
       <FlatList
-        data={filteredWords} // Render filtered word list
-        numColumns={4} // Display 4 columns
+        data={filteredWords} // Hiển thị danh sách từ đã lọc
+        numColumns={4} // Hiển thị 4 cột
         keyExtractor={(item) => item.word}
         contentContainerStyle={styles.wordListContainer}
         renderItem={({ item }) => (
@@ -96,7 +92,7 @@ export default function VocabularyScreen({ route }) {
         )}
       />
 
-      {/* Bottom Navigation */}
+      {/* Thanh điều hướng dưới cùng */}
       <BottomNav />
     </ImageBackground>
   );
@@ -106,28 +102,6 @@ const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
     resizeMode: 'cover',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#00BCD4',
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 10,
-  },
-  backButtonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFF',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -154,7 +128,7 @@ const styles = StyleSheet.create({
   },
   wordListContainer: {
     paddingHorizontal: 10,
-    paddingBottom: 80, // Add padding to avoid overlapping with BottomNav
+    paddingBottom: 80, // Thêm khoảng cách tránh trùng với BottomNav
   },
   wordButton: {
     flex: 1,
@@ -169,7 +143,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
-    maxWidth: '22%', // Ensure the button fits within 4 columns
+    maxWidth: '22%', // Đảm bảo nút vừa trong 4 cột
   },
   wordText: {
     fontSize: 16,
