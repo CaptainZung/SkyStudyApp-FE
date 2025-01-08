@@ -168,17 +168,17 @@ export default function HomeScreen({ route }) {
       <View style={styles.buttonsContainer}>
         <TouchableOpacity style={[styles.button, styles.blueButton]} onPress={() => navigation.navigate('EnglishByTopic')}>
           <Image source={require('../../assets/images/englishbytopic_icon.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>English by topic</Text>
+          <Text style={styles.buttonText}>Tiếng Anh theo chủ đề</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.button, styles.blueButton]} onPress={() => navigation.navigate('Game')}>
           <Image source={require('../../assets/images/game_icon.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Playing Game</Text>
+          <Text style={styles.buttonText}>Chơi game</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.button, styles.blueButton]} onPress={() => navigation.navigate('Dictionary')}>
           <Image source={require('../../assets/images/dictionary_icon.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Your Dictionary</Text>
+          <Text style={styles.buttonText}>Từ điển của bạn</Text>
         </TouchableOpacity>
       </View>
 
@@ -298,8 +298,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   buttonText: {
-    color: '#FFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
+    color: '#FFF',
+  },
+  blueButton: {
+    backgroundColor: '#2196F3',
   },
 });

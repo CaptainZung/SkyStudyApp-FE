@@ -3,13 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, Alert
 import * as ImagePicker from 'expo-image-picker';
 import BottomNav from '../Root/BottomNav';
 import { useAvatar } from '../Root/AvatarContext';
+import { useUserContext } from '../Screen/UserContext';
+import Heading from '../RootLayout/Heading'; // Đã import Heading
 
 export default function SettingScreen({ navigation, route }) {
-  const { avatarSource, setAvatarSource } = useAvatar(); // Use Avatar from context
-
-  // Safely extract `userName` and provide a default value
-  const initialUserName = route?.params?.userName ?? 'Guest';
-  const [userName, setUserName] = useState(initialUserName);
+  const { avatarSource, setAvatarSource } = useAvatar();
+  const { user } = useUserContext();
+  const userName = user.userName;
 
   const chooseImage = async () => {
     try {
@@ -58,6 +58,9 @@ export default function SettingScreen({ navigation, route }) {
       style={styles.backgroundImage}
     >
       <View style={styles.container}>
+        {/* Heading Section */}
+        <Heading title="Cài Đặt" onBackPress={() => navigation.goBack()} />
+
         {/* Profile Section */}
         <View style={styles.profileSection}>
           <TouchableOpacity onPress={chooseImage}>
@@ -75,7 +78,7 @@ export default function SettingScreen({ navigation, route }) {
           <TouchableOpacity style={styles.menuButton} onPress={() => navigation.navigate('Profile')}>
             <Text style={styles.menuButtonText}>Thông tin cá nhân</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuButton}>
+          <TouchableOpacity style={styles.menuButton} onPress={() => navigation.navigate('Tracking')}>
             <Text style={styles.menuButtonText}>Theo dõi tiến trình</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.menuButton}>
@@ -100,9 +103,9 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    paddingTop: 50,
+    paddingTop: 0,
   },
   profileSection: {
     alignItems: 'center',
@@ -114,6 +117,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: '#ccc',
     marginBottom: 10,
+    marginTop:100,
   },
   greeting: {
     fontSize: 24,

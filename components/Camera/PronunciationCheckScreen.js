@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -10,17 +10,21 @@ import {
   ImageBackground,
 } from 'react-native';
 import { Audio } from 'expo-av';
-import LottieView from 'lottie-react-native'; // Import Lottie
+import LottieView from 'lottie-react-native';
 import Heading from '../RootLayout/Heading';
 import BottomNav from '../Root/BottomNav';
+import { API_URL } from '../../scripts/apiConfig';
+import { useUserContext } from '../Screen/UserContext';
 
 export default function PronunciationCheckScreen({ route, navigation }) {
   const { word } = route.params;
+  const { user } = useUserContext();
   const [isRecording, setIsRecording] = useState(false);
   const [recording, setRecording] = useState(null);
   const [resultText, setResultText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [animation, setAnimation] = useState(null); // Trạng thái animation
+  const [animation, setAnimation] = useState(null);
+  const [isSaveVisible, setIsSaveVisible] = useState(false);
 
   const handleMicrophonePress = async () => {
     if (isRecording) {
@@ -48,7 +52,8 @@ export default function PronunciationCheckScreen({ route, navigation }) {
         setRecording(newRecording);
         setIsRecording(true);
         setResultText('');
-        setAnimation(null); // Xóa animation khi bắt đầu ghi âm mới
+        setAnimation(null);
+        setIsSaveVisible(false);
       } catch (error) {
         console.error('Error starting recording:', error);
         Alert.alert('Error', 'Could not start recording.');
@@ -81,15 +86,86 @@ export default function PronunciationCheckScreen({ route, navigation }) {
       const { differences } = data;
 
       if (differences.length === 0) {
-        setResultText('Tốt lắm! Phát âm rất chuẩn');
-        setAnimation(require('../../assets/animations/dung.json')); // Animation đúng
+        setResultText('Gke zị tròi! Phát âm rất chuẩn');
+        setAnimation(require('../../assets/animations/dung.json'));
+        setIsSaveVisible(true);
       } else {
         setResultText('Sai mất rùi 😭 Try again 😘');
-        setAnimation(require('../../assets/animations/sai.json')); // Animation sai
+        setAnimation(require('../../assets/animations/sai.json'));
+        setIsSaveVisible(false);
       }
     } catch (error) {
       console.error('Error while processing pronunciation:', error);
       Alert.alert('Error', 'Could not connect to the server.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const translateWord = async (text) => {
+    try {
+      const response = await fetch(
+        `https://translation.googleapis.com/language/translate/v2?key=YOUR_GOOGLE_TRANSLATE_API_KEY`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            q: text,
+            source: 'en',
+            target: 'vi',
+            format: 'text',
+          }),
+        }
+      );
+
+      const result = await response.json();
+      if (result.data && result.data.translations.length > 0) {
+        return result.data.translations[0].translatedText;
+      } else {
+        return 'Không tìm thấy nghĩa';
+      }
+    } catch (error) {
+      console.error('Translation Error:', error);
+      return 'Không tìm thấy nghĩa';
+    }
+  };
+
+  const handleSaveWord = async () => {
+    setLoading(true);
+  
+    try {
+      const vietnameseTranslation = await translateWord(word);
+  
+      const payload = {
+        user: user.user,
+        word,
+        vietnamese: vietnameseTranslation,
+      };
+  
+      console.log('Payload:', payload);
+  
+      const response = await fetch(`${API_URL}AddYourWord/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      const result = await response.json();
+  
+      if (response.ok) {
+        Alert.alert('Thành công', `Từ "${word}" đã được lưu với nghĩa "${vietnameseTranslation}".`);
+      } else if (result.error === 'Word already exists in YourDictionary') {
+        Alert.alert('Thông báo', `Từ "${word}" đã tồn tại trong từ điển của bạn.`);
+      } else {
+        Alert.alert('Lỗi', `Không thể lưu từ vào từ điển: ${result.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error saving word:', error);
+      Alert.alert('Error', 'Không thể kết nối với máy chủ.');
     } finally {
       setLoading(false);
     }
@@ -113,7 +189,7 @@ export default function PronunciationCheckScreen({ route, navigation }) {
             <LottieView
               source={animation}
               autoPlay
-              loop // Chạy lặp vô hạn
+              loop
               style={styles.animation}
             />
           )}
@@ -127,6 +203,16 @@ export default function PronunciationCheckScreen({ route, navigation }) {
             <Text style={styles.resultText}>{resultText}</Text>
           )}
         </View>
+
+        {/* Save Button */}
+        {isSaveVisible && (
+          <View style={styles.saveContainer}>
+            <Text style={styles.saveText}>Bạn có muốn lưu vào Từ điển của bạn không?</Text>
+            <TouchableOpacity style={styles.saveButton} onPress={handleSaveWord}>
+              <Text style={styles.saveButtonText}>Lưu</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Microphone Section */}
         <View style={styles.microphoneContainer}>
@@ -191,6 +277,26 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#000',
     textAlign: 'center',
+  },
+  saveContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  saveText: {
+    fontSize: 16,
+    color: '#000',
+    marginBottom: 10,
+  },
+  saveButton: {
+    backgroundColor: '#1E90FF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  saveButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   microphoneContainer: {
     alignItems: 'center',

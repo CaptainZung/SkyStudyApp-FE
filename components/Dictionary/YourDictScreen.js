@@ -3,64 +3,64 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   TextInput,
-  Image,
-  ImageBackground,
   ScrollView,
-  ActivityIndicator,
-  Platform,
+  ImageBackground,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
-import axios from 'axios'; // Sử dụng axios để gọi API
-import BottomNav from '../Root/BottomNav';
+import { useUserContext } from '../Screen/UserContext'; // Import UserContext
+import { API_URL } from '../../scripts/apiConfig';
+import Heading from '../RootLayout/Heading'; // Import Heading
 
-export default function YourDictionary() {
-  const navigation = useNavigation();
-  const [dictionary, setDictionary] = useState([]); // State để lưu từ điển
-  const [isFlipped, setIsFlipped] = useState({}); // Theo dõi trạng thái lật thẻ
-  const [loading, setLoading] = useState({}); // Theo dõi trạng thái loading của mỗi từ
+export default function YourDictionary({ navigation }) {
+  const { user } = useUserContext(); // Lấy user từ Context
+  const [dictionary, setDictionary] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const [filteredDictionary, setFilteredDictionary] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Hàm tải dữ liệu từ điển từ AsyncStorage
-  const loadDictionary = async () => {
+  // Hàm tải từ điển
+  const fetchDictionary = async () => {
     try {
-      const storedWords = await AsyncStorage.getItem('dictionary');
-      const words = storedWords ? JSON.parse(storedWords) : [];
-      setDictionary(words);
+      setLoading(true);
+  
+      // Gửi request với POST method và body chứa user
+      const response = await fetch(`${API_URL}YourDictionary/`, {
+        method: 'POST', // Sử dụng POST thay vì GET
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user: user.user }), // Truyền dữ liệu trong body
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Dictionary data fetched:', data);
+  
+        // Lưu dữ liệu từ API vào state
+        setDictionary(data.learned_words);
+        setFilteredDictionary(data.learned_words);
+      } else {
+        console.error('Error fetching dictionary:', response.status);
+      }
     } catch (error) {
-      console.error('Lỗi khi tải từ điển:', error);
+      console.error('Error in fetchDictionary:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Tải lại từ điển khi màn hình được focus
+  // Gọi API khi component được render
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', loadDictionary);
-    return unsubscribe;
-  }, [navigation]);
+    fetchDictionary();
+  }, []);
 
-  // Hàm dịch từ
-  const translateWord = async (word, index) => {
-    setLoading((prev) => ({ ...prev, [index]: true })); // Hiển thị loading
-    try {
-      const response = await axios.post(
-        'https://translation.googleapis.com/language/translate/v2',
-        {
-          q: word,
-          source: 'en',
-          target: 'vi',
-          key: 'YOUR_GOOGLE_TRANSLATE_API_KEY',
-        }
-      );
-      const translatedText = response.data.data.translations[0].translatedText;
-
-      // Lật thẻ và cập nhật từ dịch
-      setIsFlipped((prev) => ({ ...prev, [index]: translatedText }));
-    } catch (error) {
-      console.error('Lỗi khi dịch từ:', error);
-    } finally {
-      setLoading((prev) => ({ ...prev, [index]: false })); // Ẩn loading
-    }
+  // Hàm xử lý tìm kiếm
+  const handleSearch = (text) => {
+    setSearchText(text);
+    const filtered = dictionary.filter((word) =>
+      word.word.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredDictionary(filtered);
   };
 
   return (
@@ -68,57 +68,29 @@ export default function YourDictionary() {
       source={require('../../assets/images/anhnenchinh.png')}
       style={styles.backgroundImage}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Từ điển của bạn</Text>
-      </View>
+      {/* Heading Section */}
+      <Heading title="Từ điển của bạn" onBackPress={() => navigation.goBack()} />
 
-      {/* Phần tìm kiếm */}
       <View style={styles.searchSection}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Tìm kiếm"
-          placeholderTextColor="gray"
+          placeholder="Tìm kiếm từ vựng"
+          value={searchText}
+          onChangeText={handleSearch}
         />
-        <TouchableOpacity style={styles.searchButton}>
-          <Image
-            source={require('../../assets/images/search.png')}
-            style={styles.searchIcon}
-          />
-        </TouchableOpacity>
       </View>
-
-      {/* Danh sách từ */}
       <ScrollView contentContainerStyle={styles.wordList}>
-        {dictionary.map((word, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.flashcard}
-            onPress={() =>
-              isFlipped[index]
-                ? setIsFlipped((prev) => ({ ...prev, [index]: false }))
-                : translateWord(word.english, index)
-            }
-          >
-            {loading[index] ? (
-              <ActivityIndicator size="small" color="#FFF" />
-            ) : (
-              <Text style={styles.flashcardText}>
-                {isFlipped[index] ? isFlipped[index] : word.english}
-              </Text>
-            )}
-          </TouchableOpacity>
+        {filteredDictionary.map((word, index) => (
+          <View key={index} style={styles.wordItem}>
+            <Text style={styles.wordText}>
+              {word.word} - {word.vietnamese}
+            </Text>
+            <Text style={styles.learnedDate}>
+              Ngày học: {word.learned_date}
+            </Text>
+          </View>
         ))}
       </ScrollView>
-
-      {/* Thanh điều hướng dưới */}
-      <BottomNav />
     </ImageBackground>
   );
 }
@@ -128,34 +100,8 @@ const styles = StyleSheet.create({
     flex: 1,
     resizeMode: 'cover',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#00BCD4',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    paddingTop: Platform.OS === 'android' ? 40 : 60,
-    width: '100%',
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 10,
-  },
-  backButtonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
   searchSection: {
     flexDirection: 'row',
-    alignItems: 'center',
     margin: 20,
     backgroundColor: '#FFF',
     borderRadius: 20,
@@ -168,28 +114,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
   },
-  searchButton: {
-    padding: 5,
-  },
-  searchIcon: {
-    width: 24,
-    height: 24,
-  },
   wordList: {
     paddingHorizontal: 20,
     paddingTop: 10,
   },
-  flashcard: {
+  wordItem: {
     backgroundColor: '#4FAAF5',
     borderRadius: 15,
-    paddingVertical: 30,
-    alignItems: 'center',
-    marginBottom: 15,
-    elevation: 3,
+    padding: 15,
+    marginBottom: 10,
   },
-  flashcardText: {
+  wordText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFF',
+  },
+  learnedDate: {
+    fontSize: 14,
+    color: '#EEE',
   },
 });

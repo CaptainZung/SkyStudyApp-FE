@@ -14,6 +14,7 @@ import {
 import { API_URL } from '../../scripts/apiConfig';
 import { StatusBar } from 'expo-status-bar';
 import { Audio } from 'expo-av'; // Import thư viện Audio
+import { useUserContext } from '../Screen/UserContext';
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
@@ -66,7 +67,7 @@ export default function LoginScreen({ navigation }) {
       stopBackgroundMusic();
     };
   }, []);
-
+  const { setUser } = useUserContext(); // Truy cập hàm setUser từ UserContext
   // Xử lý đăng nhập
   const handleLogin = async () => {
     if (username.trim() && password.trim()) {
@@ -78,16 +79,27 @@ export default function LoginScreen({ navigation }) {
           },
           body: JSON.stringify({ username, password }),
         });
-
+  
         if (response.ok) {
           const data = await response.json();
           stopBackgroundMusic(); // Dừng nhạc khi chuyển màn hình
+  
+          // Lưu username vào Context
+          const userData = {
+            user: username,
+          };
+          setUser(userData);
+  
+          // In ra console
+          console.log('User data saved to context:', userData);
+  
           navigation.navigate('Home', { userName: username });
         } else {
           Alert.alert('Đăng nhập thất bại', 'Tài khoản hoặc mật khẩu không đúng');
         }
       } catch (error) {
         Alert.alert('Lỗi', 'Không thể kết nối server. Vui lòng thử lại sau.');
+        console.error('Error during login:', error);
       }
     } else {
       Alert.alert('Thiếu thông tin', 'Hãy nhập cả tên đăng nhập và mật khẩu.');

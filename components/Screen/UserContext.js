@@ -1,14 +1,21 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
-export const UserContext = createContext();
+// Tạo context
+const UserContext = createContext();
 
-export function UserProvider({ children }) {
-  const [userName, setUserName] = useState('Guest');
-  const [avatarSource, setAvatarSource] = useState(null);
+// Tạo provider
+export const UserProvider = ({ children }) => {
+    const [user, setUser] = useState({
+        username: null,
+        loggedIn: false,
+    });
 
-  return (
-    <UserContext.Provider value={{ userName, setUserName, avatarSource, setAvatarSource }}>
-      {children}
-    </UserContext.Provider>
-  );
-}
+    return (
+        <UserContext.Provider value={{ user, setUser }}>
+            {children}
+        </UserContext.Provider>
+    );
+};
+
+// Custom hook để sử dụng context
+export const useUserContext = () => useContext(UserContext);

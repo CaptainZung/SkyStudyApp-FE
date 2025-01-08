@@ -6,80 +6,97 @@ import {
   StyleSheet,
   ImageBackground,
   Alert,
+  ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Audio } from 'expo-av';
+import LottieView from 'lottie-react-native';
+import Heading from '../RootLayout/Heading';
+import BottomNav from '../Root/BottomNav';
 
 export default function PracticeSpeakingScreen({ route, navigation }) {
   const { referenceText } = route.params; // Get the reference text from navigation params
+  const [recording, setRecording] = useState(null);
   const [recordedUri, setRecordedUri] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [animation, setAnimation] = useState(null);
+  const [resultText, setResultText] = useState('');
 
-  const handleRecord = async () => {
-    try {
-      const { granted } = await Audio.requestPermissionsAsync();
-      if (!granted) {
-        Alert.alert('Permission Denied', 'Recording permission is required.');
-        return;
-      }
-
-      const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
-      await recording.startAsync();
-      setIsRecording(true);
-
-      setTimeout(async () => {
+  const handleMicrophonePress = async () => {
+    if (isRecording) {
+      try {
         await recording.stopAndUnloadAsync();
         const uri = recording.getURI();
-        setRecordedUri(uri);
+        setRecording(null);
         setIsRecording(false);
-        Alert.alert('Recording Finished', 'Recording saved successfully.');
-      }, 5000); // Stop after 5 seconds
-    } catch (error) {
-      console.error(error);
-      setIsRecording(false);
-      Alert.alert('Error', 'Could not start recording.');
+        handleAudioAnalysis(uri);
+      } catch (error) {
+        console.error('Error stopping recording:', error);
+        Alert.alert('Error', 'Could not stop recording.');
+      }
+    } else {
+      try {
+        const { granted } = await Audio.requestPermissionsAsync();
+        if (!granted) {
+          Alert.alert('Permission Denied', 'Recording permission is required.');
+          return;
+        }
+
+        const newRecording = new Audio.Recording();
+        await newRecording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
+        await newRecording.startAsync();
+        setRecording(newRecording);
+        setIsRecording(true);
+        setResultText('');
+        setAnimation(null);
+      } catch (error) {
+        console.error('Error starting recording:', error);
+        Alert.alert('Error', 'Could not start recording.');
+      }
     }
   };
 
-  const handleSubmitRecording = async () => {
-    if (!recordedUri) {
-      Alert.alert('No Recording', 'Please record your voice first.');
-      return;
-    }
+  const handleAudioAnalysis = async (uri) => {
+    setLoading(true);
 
     const formData = new FormData();
     formData.append('audio', {
-      uri: recordedUri,
-      name: 'recorded_audio.wav',
+      uri,
       type: 'audio/wav',
+      name: 'recorded_audio.wav',
     });
     formData.append('reference_text', referenceText);
 
     try {
-      const response = await fetch("https://active-firm-cougar.ngrok-free.app/process_video", {
+      const response = await fetch('https://active-firm-cougar.ngrok-free.app/process_video', {
         method: 'POST',
         body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
       });
-      const result = await response.json();
 
-      if (response.ok) {
-        setAnalysisResult(result);
-      } else {
-        Alert.alert('Error', result.error || 'Could not process the recording.');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Could not connect to the server.');
-    }
-  };
 
-  const handleRetry = () => {
-    setRecordedUri(null);
-    setAnalysisResult(null);
+      const data = await response.json();
+      const { differences } = data;
+
+      if (differences.length === 0) {
+        setResultText('Excellent! Your pronunciation is perfect.');
+        setAnimation(require('../../assets/animations/dung.json'));
+      } else {
+        setResultText('Some mistakes were found. Try again!');
+        setAnimation(require('../../assets/animations/sai.json'));
+      }
+
+      setAnalysisResult(data);
+    } catch (error) {
+      console.error('Error while processing pronunciation:', error);
+      Alert.alert('Error', 'Could not connect to the server.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderColoredText = (coloredText) => {
@@ -107,32 +124,39 @@ export default function PracticeSpeakingScreen({ route, navigation }) {
       style={styles.backgroundImage}
     >
       <View style={styles.container}>
+        <Heading title="Practice Speaking" onBackPress={() => navigation.goBack()} />
+
         <Text style={styles.referenceText}>{referenceText}</Text>
 
-        {analysisResult ? (
-          <View style={styles.resultContainer}>
-            {renderColoredText(analysisResult.colored_text)}
-          </View>
-        ) : (
-          <View style={styles.microphoneContainer}>
-            <TouchableOpacity
-              style={[styles.microphoneButton, isRecording && styles.recordingButton]}
-              onPress={handleRecord}
-              disabled={isRecording}
-            >
-              <Text style={styles.microphoneIcon}>🎤</Text>
-            </TouchableOpacity>
+        {animation && (
+          <View style={styles.animationContainer}>
+            <LottieView source={animation} autoPlay loop style={styles.animation} />
           </View>
         )}
 
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleRetry}>
-            <Text style={styles.actionText}>Thử lại</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={handleSubmitRecording}>
-            <Text style={styles.actionText}>Gửi</Text>
+        <View style={styles.resultBox}>
+          {loading ? (
+            <ActivityIndicator size="large" color="#000" />
+          ) : analysisResult ? (
+            renderColoredText(analysisResult.colored_text)
+          ) : (
+            <Text style={styles.resultText}>Press the microphone to start.</Text>
+          )}
+        </View>
+
+        <View style={styles.microphoneContainer}>
+          <TouchableOpacity
+            style={[styles.microphoneButton, isRecording && styles.recordingButton]}
+            onPress={handleMicrophonePress}
+          >
+            <Image
+              source={require('../../assets/images/Micro.png')}
+              style={styles.microphoneIcon}
+            />
           </TouchableOpacity>
         </View>
+
+        <BottomNav navigation={navigation} />
       </View>
     </ImageBackground>
   );
@@ -142,59 +166,73 @@ const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
     resizeMode: 'cover',
-    justifyContent: 'center',
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    padding: 20,
   },
   referenceText: {
-    fontSize: 20,
-    color: '#FFF',
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#000',
+    marginTop: 20,
     marginBottom: 20,
+    textAlign: 'center',
   },
-  microphoneContainer: {
-    marginBottom: 30,
-  },
-  microphoneButton: {
-    backgroundColor: '#1E90FF',
-    padding: 20,
-    borderRadius: 50,
-  },
-  microphoneIcon: {
-    fontSize: 40,
-    color: '#FFF',
-  },
-  recordingButton: {
-    backgroundColor: '#FF4500',
-  },
-  resultContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    padding: 20,
-    borderRadius: 10,
+  animationContainer: {
+    height: 150,
+    justifyContent: 'center',
     alignItems: 'center',
+    marginVertical: 20,
+  },
+  animation: {
+    width: 150,
+    height: 150,
+  },
+  resultBox: {
+    width: '85%',
+    minHeight: 50,
+    backgroundColor: '#F0F8FF',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    elevation: 2,
+    paddingHorizontal: 10,
+    overflow: 'hidden',
   },
   textRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '80%',
+  resultText: {
+    fontSize: 18,
+    color: '#000',
+    textAlign: 'center',
   },
-  actionButton: {
-    backgroundColor: '#0080FF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginHorizontal: 5,
+  microphoneContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 180,
   },
-  actionText: {
-    color: '#FFF',
-    fontSize: 16,
+  microphoneButton: {
+    backgroundColor: '#FFF',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+  },
+  recordingButton: {
+    backgroundColor: '#FF6347',
+  },
+  microphoneIcon: {
+    width: 60,
+    height: 60,
+    resizeMode: 'contain',
   },
 });
