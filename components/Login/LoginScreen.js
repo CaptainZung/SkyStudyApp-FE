@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   link: {
-    color: 'yellow',
+    color: 'orange',
     fontSize: 16,
     fontWeight: 'bold',
     textDecorationLine: 'underline',

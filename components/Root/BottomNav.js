@@ -1,76 +1,86 @@
-import React from 'react';
-import { View, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, TouchableOpacity, Image, StyleSheet, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 
 export default function BottomNav({ userName, avatarSource }) {
   const navigation = useNavigation();
+  const scaleAnim = new Animated.Value(1);
+  const opacityAnim = new Animated.Value(1);
+
+  const handleNavigate = useCallback((screen) => {
+    Animated.parallel([
+      Animated.timing(scaleAnim, { toValue: 0.9, duration: 100, useNativeDriver: true }),
+      Animated.timing(opacityAnim, { toValue: 0.7, duration: 100, useNativeDriver: true }),
+    ]).start(() => {
+      Animated.parallel([
+        Animated.timing(scaleAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
+        Animated.timing(opacityAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
+      ]).start(() => navigation.navigate(screen, { userName, avatarSource }));
+    });
+  }, [navigation, userName, avatarSource]);
 
   return (
-    <View style={styles.navigationContainer}>
-      <TouchableOpacity
-        style={styles.navButton}
-        onPress={() => navigation.navigate('Home', { userName, avatarSource })}
-        activeOpacity={0.8}
-      >
-        <Image
-          source={require('../../assets/images/home_icon.png')}
-          style={styles.navIcon}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
+    <LinearGradient 
+      colors={['#2FB8FF', '#9EECD9']} 
+      start={{ x: 0, y: 0 }} 
+      end={{ x: 1, y: 1 }}
+      style={styles.navigationContainer}
+    >
+      {/* Home Button */}
+      <Animated.View style={[styles.navItem, { transform: [{ scale: scaleAnim }], opacity: opacityAnim }]}>
+        <TouchableOpacity onPress={() => handleNavigate('Home')} activeOpacity={0.8}>
+          <Image source={require('../../assets/images/home_icon.png')} style={styles.navIcon} />
+        </TouchableOpacity>
+      </Animated.View>
 
       {/* Camera Button */}
-      <TouchableOpacity
-        style={styles.navButton}
-        onPress={() => navigation.navigate('Camera', { userName, avatarSource })}
-        activeOpacity={0.8}
-      >
-        <Image
-          source={require('../../assets/images/scan_icon.png')}
-          style={styles.navIcon}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
+      <Animated.View style={[styles.navItem, { transform: [{ scale: scaleAnim }], opacity: opacityAnim }]}>
+        <TouchableOpacity onPress={() => handleNavigate('Camera')} activeOpacity={0.8}>
+          <Image source={require('../../assets/images/scan_icon.png')} style={styles.navIcon} />
+        </TouchableOpacity>
+      </Animated.View>
 
       {/* Settings Button */}
-      <TouchableOpacity
-        style={styles.navButton}
-        onPress={() => navigation.navigate('Setting', { userName, avatarSource })}
-        activeOpacity={0.8}
-      >
-        <Image
-          source={require('../../assets/images/setting_icon.png')}
-          style={styles.navIcon}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
-    </View>
+      <Animated.View style={[styles.navItem, { transform: [{ scale: scaleAnim }], opacity: opacityAnim }]}>
+        <TouchableOpacity onPress={() => handleNavigate('Setting')} activeOpacity={0.8}>
+          <Image source={require('../../assets/images/setting_icon.png')} style={styles.navIcon} />
+        </TouchableOpacity>
+      </Animated.View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   navigationContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-around',
     alignItems: 'center',
-    width: '100%',
+    width: '90%',
     position: 'absolute',
     bottom: 20,
-    paddingHorizontal: 20,
-    backgroundColor: 'transparent',
-  },
-  navButton: {
-    backgroundColor: '#FFF',
-    padding: 10,
-    borderRadius: 50,
+    alignSelf: 'center',
+    paddingVertical: 12,
+    borderRadius: 30,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  navItem: {
+    backgroundColor: '#FFF',
+    padding: 12,
+    borderRadius: 50,
     elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 3,
   },
   navIcon: {
-    width: 40, // Slightly adjusted size for better scaling
+    width: 40,
     height: 40,
+    resizeMode: 'contain',
   },
 });

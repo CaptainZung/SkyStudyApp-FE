@@ -1,92 +1,109 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, Alert } from 'react-native';
+import React, { useCallback, useRef, useEffect } from 'react';
+import { 
+  View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, Alert, Animated 
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import BottomNav from '../Root/BottomNav';
 import { useAvatar } from '../Root/AvatarContext';
 import { useUserContext } from '../Screen/UserContext';
-import Heading from '../RootLayout/Heading'; // Đã import Heading
+import Heading from '../RootLayout/Heading';
 
-export default function SettingScreen({ navigation, route }) {
+export default function SettingScreen({ navigation }) {
   const { avatarSource, setAvatarSource } = useAvatar();
   const { user } = useUserContext();
-  const userName = user.userName;
+  const userName = user?.username || 'Người dùng'; 
 
-  const chooseImage = async () => {
+  const scaleAnim = useRef(new Animated.Value(1)).current; 
+  const fadeAnim = useRef(new Animated.Value(1)).current; // Animation cho avatar
+
+  // 🟢 Kiểm tra quyền truy cập thư viện ảnh
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Quyền truy cập bị từ chối', 'Bạn cần cấp quyền để chọn ảnh.');
+      return false;
+    }
+    return true;
+  };
+
+  // 🟢 Hàm chọn ảnh từ thư viện
+  const chooseImage = useCallback(async () => {
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (permissionResult.granted === false) {
-        Alert.alert('Permission Denied', 'You need to allow access to your media library to use this feature.');
-        return;
-      }
+      const hasPermission = await requestPermissions();
+      if (!hasPermission) return;
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaType.Image, // ✅ Sửa MediaTypeOptions -> MediaType
         allowsEditing: true,
         aspect: [1, 1],
         quality: 1,
       });
 
-      if (!result.canceled) {
-        setAvatarSource({ uri: result.assets[0].uri }); // Update avatar in context
+      if (!result.assets || result.assets.length === 0) {
+        Alert.alert('Thông báo', 'Bạn chưa chọn ảnh nào.');
+        return;
       }
-    } catch (error) {
-      Alert.alert('Error', 'An error occurred while selecting the image.');
-    }
-  };
 
-  const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Log Out',
-        onPress: () => {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'Login' }], // Clear stack and navigate to Login
-          });
-        },
-      },
+      setAvatarSource({ uri: result.assets[0].uri });
+
+      // 🔥 Hiệu ứng avatar khi chọn ảnh
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(scaleAnim, { toValue: 1.1, duration: 100, useNativeDriver: true }),
+          Animated.timing(scaleAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+        ]),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+      ]).start();
+    } catch (error) {
+      Alert.alert('Lỗi', `Không thể chọn ảnh.\nChi tiết: ${error.message}`);
+    }
+  }, []);
+
+  // 🟢 Xử lý đăng xuất
+  const handleLogout = useCallback(() => {
+    Alert.alert('Đăng xuất', 'Bạn có chắc muốn đăng xuất?', [
+      { text: 'Hủy', style: 'cancel' },
+      { text: 'Đăng xuất', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Login' }] }) },
     ]);
-  };
+  }, [navigation]);
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/anhnenchinh.png')}
-      style={styles.backgroundImage}
-    >
+    <ImageBackground source={require('../../assets/images/anhnenchinh.png')} style={styles.backgroundImage}>
       <View style={styles.container}>
         {/* Heading Section */}
         <Heading title="Cài Đặt" onBackPress={() => navigation.goBack()} />
 
         {/* Profile Section */}
         <View style={styles.profileSection}>
-          <TouchableOpacity onPress={chooseImage}>
-            <Image
-              source={avatarSource ? avatarSource : require('../../assets/images/user.png')}
-              style={styles.avatar}
-            />
-          </TouchableOpacity>
-          {/* Display userName */}
+          <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: fadeAnim }}>
+            <TouchableOpacity onPress={chooseImage} activeOpacity={0.8}>
+              <Image 
+                source={avatarSource?.uri ? { uri: avatarSource.uri } : require('../../assets/images/user.png')} 
+                style={styles.avatar} 
+              />
+            </TouchableOpacity>
+          </Animated.View>
           <Text style={styles.greeting}>{userName}</Text>
         </View>
 
         {/* Buttons Section */}
         <View style={styles.buttonsWrapper}>
-          <TouchableOpacity style={styles.menuButton} onPress={() => navigation.navigate('Profile')}>
-            <Text style={styles.menuButtonText}>Thông tin cá nhân</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuButton} onPress={() => navigation.navigate('Tracking')}>
-            <Text style={styles.menuButtonText}>Theo dõi tiến trình</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuButton}>
-            <Text style={styles.menuButtonText}>Điều khoản & chính sách</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuButton} onPress={handleLogout}>
-            <Text style={styles.menuButtonText}>Đăng xuất</Text>
-          </TouchableOpacity>
+          {[
+            { label: 'Thông tin cá nhân', screen: 'Profile' },
+            { label: 'Theo dõi tiến trình', screen: 'Tracking' },
+            { label: 'Điều khoản & chính sách', screen: 'Policy' },
+            { label: 'Đăng xuất', screen: 'Logout', action: handleLogout },
+          ].map((item, index) => (
+            <Animated.View key={index} style={styles.animatedButtonContainer}>
+              <TouchableOpacity 
+                style={styles.menuButton} 
+                onPress={item.action || (() => navigation.navigate(item.screen))}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.menuButtonText}>{item.label}</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          ))}
         </View>
       </View>
 
@@ -97,47 +114,24 @@ export default function SettingScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    resizeMode: 'cover',
-  },
-  container: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: 0,
-  },
-  profileSection: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#ccc',
-    marginBottom: 10,
-    marginTop:100,
-  },
-  greeting: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  buttonsWrapper: {
-    width: '80%',
-    marginTop: 30,
-  },
+  backgroundImage: { flex: 1, resizeMode: 'cover' },
+  container: { flex: 1, justifyContent: 'flex-start', alignItems: 'center' },
+  profileSection: { alignItems: 'center', marginTop: 100, marginBottom: 30 },
+  avatar: { width: 110, height: 110, borderRadius: 55, borderWidth: 2, borderColor: '#FFF' },
+  greeting: { fontSize: 24, fontWeight: 'bold', color: '#FFF', marginTop: 10 },
+  buttonsWrapper: { width: '80%', marginTop: 30 },
   menuButton: {
-    backgroundColor: '#4FAAF5',
+    backgroundColor: '#1E90FF',
     borderRadius: 15,
     paddingVertical: 15,
     marginBottom: 15,
     alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
-  menuButtonText: {
-    fontSize: 18,
-    color: '#FFF',
-    fontWeight: 'bold',
-  },
+  menuButtonText: { fontSize: 18, color: '#FFF', fontWeight: 'bold' },
+  animatedButtonContainer: { transform: [{ scale: 1 }] },
 });

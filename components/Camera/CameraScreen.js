@@ -1,5 +1,6 @@
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useState, useRef } from 'react';
+import axios from "axios";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   StyleSheet,
   TouchableOpacity,
@@ -9,49 +10,38 @@ import {
   SafeAreaView,
   Animated,
   ActivityIndicator,
-} from 'react-native';
-import LoadingPopup from '../Root/LoadingPopup'; // Import the loading popup component
-
-const AI_API_URL = "https://enhanced-snake-externally.ngrok-free.app/predict";
+  Modal,
+  Pressable,
+} from "react-native";
+import LoadingPopup from "../Root/LoadingPopup";
+import { AI_API_URL } from "../../scripts/apiConfig";
 
 export default function CameraScreen({ navigation }) {
-  const [facing, setFacing] = useState('back'); // 'back' or 'front'
-  const [flash, setFlash] = useState('off'); // 'torch' or 'off'
+  const [facing, setFacing] = useState("back");
+  const [flash, setFlash] = useState("off");
   const [permission, requestPermission] = useCameraPermissions();
   const [processing, setProcessing] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
 
   const cameraRef = useRef(null);
   const scaleAnimation = useRef(new Animated.Value(1)).current;
 
-  if (!permission) {
-    return <View />;
-  }
+  useEffect(() => {
+    if (permission && !permission.granted) {
+      setShowPermissionModal(true);
+    }
+  }, [permission]);
 
-  if (!permission.granted) {
-    return (
-      <View style={styles.permissionContainer}>
-        <Text style={styles.permissionMessage}>
-          We need your permission to access the camera
-        </Text>
-        <TouchableOpacity
-          onPress={requestPermission}
-          style={styles.permissionButton}
-        >
-          <Text style={styles.permissionButtonText}>Grant Camera Permission</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  const toggleCameraFacing = () => {
-    setFacing((current) => (current === 'back' ? 'front' : 'back'));
+  const requestCameraPermission = async () => {
+    const { granted } = await requestPermission();
+    setShowPermissionModal(!granted);
   };
 
-  const toggleTorch = () => {
-    setFlash((current) => (current === 'off' ? 'torch' : 'off'));
-  };
+  const toggleCameraFacing = useCallback(() => {
+    setFacing((current) => (current === "back" ? "front" : "back"));
+  }, []);
 
-  const startAnimation = () => {
+  const startAnimation = useCallback(() => {
     Animated.sequence([
       Animated.timing(scaleAnimation, {
         toValue: 1.2,
@@ -64,74 +54,72 @@ export default function CameraScreen({ navigation }) {
         useNativeDriver: true,
       }),
     ]).start();
-  };
+  }, [scaleAnimation]);
 
   const takeAndSendPicture = async () => {
-    if (cameraRef.current) {
-      startAnimation();
-      setProcessing(true);
+    if (!cameraRef.current) return;
 
-      try {
-        const photo = await cameraRef.current.takePictureAsync({
-          base64: true,
-          quality: 0.8,
-        });
+    startAnimation();
+    setProcessing(true);
 
-        const formData = new FormData();
-        formData.append("file", {
-          uri: photo.uri,
-          name: "photo.jpg",
-          type: "image/jpeg",
-        });
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        base64: true,
+        quality: 0.8,
+      });
 
-        const response = await fetch(AI_API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          body: formData,
-        });
+      const formData = new FormData();
+      formData.append("file", {
+        uri: photo.uri,
+        name: "photo.jpg",
+        type: "image/jpeg",
+      });
 
-        if (!response.ok) {
-          throw new Error(
-            `Server error: ${response.status} - ${response.statusText}`
-          );
-        }
+      const response = await axios.post(`${AI_API_URL}/predict`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-        const result = await response.json();
-        const { processed_image, predictions } = result;
-
-        navigation.navigate("Detection", {
-          image: processed_image,
-          predictions,
-        });
-      } catch (error) {
-        console.error("Error sending photo to server:", error);
-        alert("An error occurred while connecting to the server.");
-      } finally {
-        setProcessing(false);
-      }
+      navigation.navigate("Detection", {
+        image: response.data.processed_image,
+        predictions: response.data.predictions,
+      });
+    } catch (error) {
+      console.error("Error sending photo to server:", error);
+      alert("An error occurred while connecting to the server.");
+    } finally {
+      setProcessing(false);
     }
   };
+
+  if (!permission) {
+    return <View />;
+  }
+
+  
 
   return (
     <SafeAreaView style={styles.container}>
       <LoadingPopup visible={processing} />
+
       <View style={styles.topButtonsContainer}>
         <TouchableOpacity
           style={styles.roundButton}
           onPress={() => navigation.goBack()}
         >
           <Image
-            source={require('../../assets/images/back_icon.png')}
+            source={require("../../assets/images/back_icon.png")}
             style={styles.icon}
           />
         </TouchableOpacity>
 
-
-        <TouchableOpacity style={styles.roundButton} onPress={toggleCameraFacing}>
+        <TouchableOpacity
+          style={styles.roundButton}
+          onPress={toggleCameraFacing}
+        >
           <Image
-            source={require('../../assets/images/flip.png')}
+            source={require("../../assets/images/flip.png")}
             style={styles.icon}
           />
         </TouchableOpacity>
@@ -159,111 +147,111 @@ export default function CameraScreen({ navigation }) {
             disabled={processing}
           >
             <Image
-              source={require('../../assets/images/cam.png')}
+              source={require("../../assets/images/cam.png")}
               style={styles.captureIcon}
             />
           </TouchableOpacity>
         </Animated.View>
       </View>
+
+      {/* Permission Request Modal */}
+      <Modal visible={showPermissionModal} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Camera Permission Needed</Text>
+            <Text style={styles.modalText}>
+              Please grant camera access to use this feature.
+            </Text>
+            <Pressable
+              style={styles.permissionButton}
+              onPress={requestCameraPermission}
+            >
+              <Text style={styles.permissionButtonText}>Grant Permission</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1E90FF',
-  },
+  container: { flex: 1, backgroundColor: "#1E90FF" },
   topButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 10,
     paddingHorizontal: 20,
   },
   roundButton: {
     width: 60,
     height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.8)",
     borderRadius: 30,
   },
   camera: {
     flex: 1,
-    width: '100%',
+    width: "100%",
     marginVertical: 20,
     borderWidth: 4,
-    borderColor: '#FFA500',
+    borderColor: "#FFA500",
     borderRadius: 12,
   },
   bottomButtonsContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 20,
   },
   captureButton: {
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: '#FFF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FFF",
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 3,
-    borderColor: '#1E90FF',
+    borderColor: "#1E90FF",
   },
-  captureIcon: {
-    width: 60,
-    height: 60,
-    resizeMode: 'contain',
-  },
-  icon: {
-    width: 45,
-    height: 45,
-    resizeMode: 'contain',
-  },
+  captureIcon: { width: 60, height: 60, resizeMode: "contain" },
+  icon: { width: 45, height: 45, resizeMode: "contain" },
   processingOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   processingText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 10,
   },
-  permissionContainer: {
+  modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#1E90FF',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  permissionMessage: {
-    fontSize: 18,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  permissionButton: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
+  modalContent: {
+    width: 300,
+    backgroundColor: "#FFF",
+    padding: 20,
     borderRadius: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 3,
-    elevation: 5,
+    alignItems: "center",
   },
-  permissionButtonText: {
-    fontSize: 16,
-    color: '#1E90FF',
-    fontWeight: 'bold',
-    textAlign: 'center',
+  modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
+  modalText: { fontSize: 16, textAlign: "center", marginBottom: 20 },
+  permissionButton: {
+    backgroundColor: "#1E90FF",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
   },
+  permissionButtonText: { color: "#FFF", fontSize: 16, fontWeight: "bold" },
 });
