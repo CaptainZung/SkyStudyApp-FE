@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from '../components/Screen/HomeScreen';
@@ -12,13 +12,12 @@ import { UserProvider } from '../components/Screen/UserContext';
 import EnglishByTopicScreen from '../components/EnP/EnglishByTopicScreen';
 import YourDictScreen from '../components/Dictionary/YourDictScreen';
 import VocabularyScreen from '../components/EnP/VocabularyScreen';
-// import DefinitionScreen from '../components/EnP/DefinitionScreen';
 import MatchWorldLevelScreen from '../components/Game/MatchWordLevelScreen';
 import MatchWordScreen from '../components/Game/MatchWordScreen';
 import SignUpScreen from '../components/Login/SignUpScreen';
 import ExampleForVocabScreen from '../components/EnP/ExampleForVocabScreen';
 import GuessTheWord from "../components/Game/GuessTheWord";
-import ListenToGuess from "../components/Game/ListenToGuess"
+import ListenToGuess from "../components/Game/ListenToGuess";
 import EnterPinScreen from '../components/Login/EnterPinScreen';
 import PracticeSpeakingScreen from '../components/EnP/PracticeSpeakingScreen';
 import ProfileScreen from '../components/Setting/ProfileScreen';
@@ -26,15 +25,24 @@ import PronunciationCheckScreen from '../components/Camera/PronunciationCheckScr
 import BottomNav from '../components/Root/BottomNav';
 import { AvatarProvider } from '../components/Root/AvatarContext';
 import TrackingProcessingScreen from '../components/Tracking/TrackingProcessingScreen';
+
 const Stack = createStackNavigator();
 
-const Router = () => {
+// 🌟 Tách screenOptions giúp code gọn hơn
+const screenOptions = {
+  headerShown: false,
+  animationEnabled: true,  // Kích hoạt animation mượt hơn
+  gestureEnabled: true,    // Vuốt để quay lại
+  detachInactiveScreens: true, // Giải phóng bộ nhớ
+};
+
+const Router =(() => {
   return (
-    <UserProvider> {/* Bọc UserContext */}
-      <AvatarProvider> {/* Bọc AvatarContext */}
+    <UserProvider>
+      <AvatarProvider>
         <NavigationContainer>
-          <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Navigator initialRouteName="Login" screenOptions={screenOptions}>
+            <Stack.Screen name="Login" component={LoginScreen} options={{ lazy: true }} />
             <Stack.Screen name="BottomNav" component={BottomNav} />
             <Stack.Screen name="NameInput" component={NameInputScreen} />
             <Stack.Screen name="Home" component={HomeScreen} />
@@ -42,27 +50,25 @@ const Router = () => {
             <Stack.Screen name="Game" component={GameScreen} />
             <Stack.Screen name="Setting" component={SettingScreen} />
             <Stack.Screen name="Detection" component={DetectionScreen} />
-            <Stack.Screen name="EnglishByTopic" component={EnglishByTopicScreen} />  
+            <Stack.Screen name="EnglishByTopic" component={EnglishByTopicScreen} />
             <Stack.Screen name="Dictionary" component={YourDictScreen} />
-            <Stack.Screen name="Vocabulary" component={VocabularyScreen}/>
-            {/* <Stack.Screen name="Definition" component={DefinitionScreen}/> */}
-            <Stack.Screen name="MatchWordLevel" component={MatchWorldLevelScreen}/>
-            <Stack.Screen name="MatchWord" component={MatchWordScreen}/>
-            <Stack.Screen name="SignUp" component={SignUpScreen}/>
-            <Stack.Screen name="ExampleForVocab" component={ExampleForVocabScreen}></Stack.Screen>
-            <Stack.Screen name="GuessTheWord" component={GuessTheWord}/>
-            <Stack.Screen name="ListenToGuess" component={ListenToGuess}/>
-            <Stack.Screen name="EnterPin" component={EnterPinScreen}></Stack.Screen>
-            <Stack.Screen name="PracticeSpeaking" component={PracticeSpeakingScreen}></Stack.Screen>
-            <Stack.Screen name="Profile" component={ProfileScreen}></Stack.Screen>
-            <Stack.Screen name="PronunCheck" component={PronunciationCheckScreen}></Stack.Screen>
-            <Stack.Screen name="Tracking" component={TrackingProcessingScreen}></Stack.Screen>
+            <Stack.Screen name="Vocabulary" component={VocabularyScreen} />
+            <Stack.Screen name="MatchWordLevel" component={MatchWorldLevelScreen} />
+            <Stack.Screen name="MatchWord" component={MatchWordScreen} />
+            <Stack.Screen name="SignUp" component={SignUpScreen} />
+            <Stack.Screen name="ExampleForVocab" component={ExampleForVocabScreen} />
+            <Stack.Screen name="GuessTheWord" component={GuessTheWord} />
+            <Stack.Screen name="ListenToGuess" component={ListenToGuess} />
+            <Stack.Screen name="EnterPin" component={EnterPinScreen} />
+            <Stack.Screen name="PracticeSpeaking" component={PracticeSpeakingScreen} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="PronunCheck" component={PronunciationCheckScreen} />
+            <Stack.Screen name="Tracking" component={TrackingProcessingScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </AvatarProvider>
     </UserProvider>
   );
-};
-
+});
 
 export default Router;

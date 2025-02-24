@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -8,20 +8,20 @@ import {
   ActivityIndicator,
   Alert,
   ImageBackground,
-} from 'react-native';
-import { Audio } from 'expo-av';
-import LottieView from 'lottie-react-native';
-import Heading from '../RootLayout/Heading';
-import BottomNav from '../Root/BottomNav';
-import { API_URL } from '../../scripts/apiConfig';
-import { useUserContext } from '../Screen/UserContext';
+} from "react-native";
+import { Audio } from "expo-av";
+import LottieView from "lottie-react-native";
+import Heading from "../RootLayout/Heading";
+import BottomNav from "../Root/BottomNav";
+import { AUDIO_URL, API_URL } from "../../scripts/apiConfig";
+import { useUserContext } from "../Screen/UserContext";
 
 export default function PronunciationCheckScreen({ route, navigation }) {
   const { word } = route.params;
   const { user } = useUserContext();
   const [isRecording, setIsRecording] = useState(false);
   const [recording, setRecording] = useState(null);
-  const [resultText, setResultText] = useState('');
+  const [resultText, setResultText] = useState("");
   const [loading, setLoading] = useState(false);
   const [animation, setAnimation] = useState(null);
   const [isSaveVisible, setIsSaveVisible] = useState(false);
@@ -35,28 +35,41 @@ export default function PronunciationCheckScreen({ route, navigation }) {
         setIsRecording(false);
         handleAudioAnalysis(uri);
       } catch (error) {
-        console.error('Error stopping recording:', error);
-        Alert.alert('Error', 'Could not stop recording.');
+        console.error("Error stopping recording:", error);
+        Alert.alert("Lỗi", "Không thể dừng ghi âm.");
       }
     } else {
       try {
-        const { granted } = await Audio.requestPermissionsAsync();
-        if (!granted) {
-          Alert.alert('Permission Denied', 'Recording permission is required.');
+        // ✅ Yêu cầu quyền truy cập microphone
+        const { status } = await Audio.requestPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Quyền bị từ chối", "Cần cấp quyền để ghi âm.");
           return;
         }
-
+  
+        // ✅ Thiết lập chế độ âm thanh
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+          interruptionModeIOS: 1, // ✅ Dùng số thay vì hằng số
+          interruptionModeAndroid: 1, // ✅ Dùng số thay vì hằng số
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+  
+        // ✅ Bắt đầu ghi âm
         const newRecording = new Audio.Recording();
-        await newRecording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
+        await newRecording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
         await newRecording.startAsync();
         setRecording(newRecording);
         setIsRecording(true);
-        setResultText('');
+        setResultText("");
         setAnimation(null);
         setIsSaveVisible(false);
       } catch (error) {
-        console.error('Error starting recording:', error);
-        Alert.alert('Error', 'Could not start recording.');
+        console.error("Error starting recording:", error);
+        Alert.alert("Lỗi", "Không thể bắt đầu ghi âm.");
       }
     }
   };
@@ -65,16 +78,19 @@ export default function PronunciationCheckScreen({ route, navigation }) {
     setLoading(true);
 
     const formData = new FormData();
-    formData.append('audio', {
+    formData.append("audio", {
       uri,
-      type: 'audio/wav',
-      name: 'recorded_audio.wav',
+      type: "audio/wav",
+      name: "recorded_audio.wav",
     });
-    formData.append('reference_text', word);
+    formData.append("reference_text", word);
 
     try {
-      const response = await fetch('https://active-firm-cougar.ngrok-free.app/process_video', {
-        method: 'POST',
+      const response = await fetch(`${AUDIO_URL}/process_audio`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
         body: formData,
       });
 
@@ -86,17 +102,17 @@ export default function PronunciationCheckScreen({ route, navigation }) {
       const { differences } = data;
 
       if (differences.length === 0) {
-        setResultText('Gke zị tròi! Phát âm rất chuẩn');
-        setAnimation(require('../../assets/animations/dung.json'));
+        setResultText("Gke zị tròi! Phát âm rất chuẩn");
+        setAnimation(require("../../assets/animations/dung.json"));
         setIsSaveVisible(true);
       } else {
-        setResultText('Sai mất rùi 😭 Try again 😘');
-        setAnimation(require('../../assets/animations/sai.json'));
+        setResultText("Sai mất rùi 😭 Try again 😘");
+        setAnimation(require("../../assets/animations/sai.json"));
         setIsSaveVisible(false);
       }
     } catch (error) {
-      console.error('Error while processing pronunciation:', error);
-      Alert.alert('Error', 'Could not connect to the server.');
+      console.error("Error while processing pronunciation:", error);
+      Alert.alert("Error", "Could not connect to the server.");
     } finally {
       setLoading(false);
     }
@@ -107,15 +123,15 @@ export default function PronunciationCheckScreen({ route, navigation }) {
       const response = await fetch(
         `https://translation.googleapis.com/language/translate/v2?key=YOUR_GOOGLE_TRANSLATE_API_KEY`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             q: text,
-            source: 'en',
-            target: 'vi',
-            format: 'text',
+            source: "en",
+            target: "vi",
+            format: "text",
           }),
         }
       );
@@ -124,48 +140,57 @@ export default function PronunciationCheckScreen({ route, navigation }) {
       if (result.data && result.data.translations.length > 0) {
         return result.data.translations[0].translatedText;
       } else {
-        return 'Không tìm thấy nghĩa';
+        return "Không tìm thấy nghĩa";
       }
     } catch (error) {
-      console.error('Translation Error:', error);
-      return 'Không tìm thấy nghĩa';
+      console.error("Translation Error:", error);
+      return "Không tìm thấy nghĩa";
     }
   };
 
   const handleSaveWord = async () => {
     setLoading(true);
-  
+
     try {
       const vietnameseTranslation = await translateWord(word);
-  
+
       const payload = {
         user: user.user,
         word,
         vietnamese: vietnameseTranslation,
       };
-  
-      console.log('Payload:', payload);
-  
+
+      console.log("Payload:", payload);
+
       const response = await fetch(`${API_URL}AddYourWord/`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
-        Alert.alert('Thành công', `Từ "${word}" đã được lưu với nghĩa "${vietnameseTranslation}".`);
-      } else if (result.error === 'Word already exists in YourDictionary') {
-        Alert.alert('Thông báo', `Từ "${word}" đã tồn tại trong từ điển của bạn.`);
+        Alert.alert(
+          "Thành công",
+          `Từ "${word}" đã được lưu với nghĩa "${vietnameseTranslation}".`
+        );
+      } else if (result.error === "Word already exists in YourDictionary") {
+        Alert.alert(
+          "Thông báo",
+          `Từ "${word}" đã tồn tại trong từ điển của bạn.`
+        );
       } else {
-        Alert.alert('Lỗi', `Không thể lưu từ vào từ điển: ${result.message || 'Unknown error'}`);
+        Alert.alert(
+          "Lỗi",
+          `Không thể lưu từ vào từ điển: ${result.message || "Unknown error"}`
+        );
       }
     } catch (error) {
-      console.error('Error saving word:', error);
-      Alert.alert('Error', 'Không thể kết nối với máy chủ.');
+      console.error("Error saving word:", error);
+      Alert.alert("Error", "Không thể kết nối với máy chủ.");
     } finally {
       setLoading(false);
     }
@@ -173,12 +198,15 @@ export default function PronunciationCheckScreen({ route, navigation }) {
 
   return (
     <ImageBackground
-      source={require('../../assets/images/anhnenchinh.png')}
+      source={require("../../assets/images/anhnenchinh.png")}
       style={styles.backgroundImage}
     >
       <View style={styles.container}>
         {/* Header */}
-        <Heading title="Kiểm Tra Phát Âm" onBackPress={() => navigation.goBack()} />
+        <Heading
+          title="Kiểm Tra Phát Âm"
+          onBackPress={() => navigation.goBack()}
+        />
 
         {/* Word */}
         <Text style={styles.wordText}>{word}</Text>
@@ -207,8 +235,13 @@ export default function PronunciationCheckScreen({ route, navigation }) {
         {/* Save Button */}
         {isSaveVisible && (
           <View style={styles.saveContainer}>
-            <Text style={styles.saveText}>Bạn có muốn lưu vào Từ điển của bạn không?</Text>
-            <TouchableOpacity style={styles.saveButton} onPress={handleSaveWord}>
+            <Text style={styles.saveText}>
+              Bạn có muốn lưu vào Từ điển của bạn không?
+            </Text>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={handleSaveWord}
+            >
               <Text style={styles.saveButtonText}>Lưu</Text>
             </TouchableOpacity>
           </View>
@@ -217,11 +250,14 @@ export default function PronunciationCheckScreen({ route, navigation }) {
         {/* Microphone Section */}
         <View style={styles.microphoneContainer}>
           <TouchableOpacity
-            style={[styles.microphoneButton, isRecording && styles.recordingButton]}
+            style={[
+              styles.microphoneButton,
+              isRecording && styles.recordingButton,
+            ]}
             onPress={handleMicrophonePress}
           >
             <Image
-              source={require('../../assets/images/Micro.png')}
+              source={require("../../assets/images/Micro.png")}
               style={styles.microphoneIcon}
             />
           </TouchableOpacity>
@@ -237,26 +273,26 @@ export default function PronunciationCheckScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   container: {
     flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
+    justifyContent: "flex-start",
+    alignItems: "center",
   },
   wordText: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginTop: 40,
     marginBottom: 15,
-    textAlign: 'center',
+    textAlign: "center",
     zIndex: 2,
   },
   animationContainer: {
     height: 150,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginVertical: 20,
   },
   animation: {
@@ -264,60 +300,60 @@ const styles = StyleSheet.create({
     height: 150,
   },
   resultBox: {
-    width: '85%',
+    width: "85%",
     height: 100,
-    backgroundColor: '#F0F8FF',
+    backgroundColor: "#F0F8FF",
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 30,
     elevation: 2,
   },
   resultText: {
     fontSize: 18,
-    color: '#000',
-    textAlign: 'center',
+    color: "#000",
+    textAlign: "center",
   },
   saveContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginVertical: 20,
   },
   saveText: {
     fontSize: 16,
-    color: '#000',
+    color: "#000",
     marginBottom: 10,
   },
   saveButton: {
-    backgroundColor: '#1E90FF',
+    backgroundColor: "#1E90FF",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
   },
   saveButtonText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   microphoneContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginVertical: 20,
   },
   microphoneButton: {
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     width: 100,
     height: 100,
     borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     elevation: 5,
   },
   recordingButton: {
-    backgroundColor: '#FF6347',
+    backgroundColor: "#FF6347",
   },
   microphoneIcon: {
     width: 60,
     height: 60,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
 });

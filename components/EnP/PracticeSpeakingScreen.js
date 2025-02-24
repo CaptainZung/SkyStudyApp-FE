@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,21 +8,20 @@ import {
   Alert,
   ActivityIndicator,
   Image,
-} from 'react-native';
-import { Audio } from 'expo-av';
-import LottieView from 'lottie-react-native';
-import Heading from '../RootLayout/Heading';
-import BottomNav from '../Root/BottomNav';
+} from "react-native";
+import { Audio } from "expo-av";
+import LottieView from "lottie-react-native";
+import Heading from "../RootLayout/Heading";
+import BottomNav from "../Root/BottomNav";
 
 export default function PracticeSpeakingScreen({ route, navigation }) {
-  const { referenceText } = route.params; // Get the reference text from navigation params
+  const { referenceText } = route.params;
   const [recording, setRecording] = useState(null);
-  const [recordedUri, setRecordedUri] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [loading, setLoading] = useState(false);
   const [animation, setAnimation] = useState(null);
-  const [resultText, setResultText] = useState('');
+  const [resultText, setResultText] = useState("");
 
   const handleMicrophonePress = async () => {
     if (isRecording) {
@@ -31,47 +30,70 @@ export default function PracticeSpeakingScreen({ route, navigation }) {
         const uri = recording.getURI();
         setRecording(null);
         setIsRecording(false);
-        handleAudioAnalysis(uri);
+
+        // Add a small delay before sending to server
+        setTimeout(() => {
+          handleAudioAnalysis(uri);
+        }, 500);
       } catch (error) {
-        console.error('Error stopping recording:', error);
-        Alert.alert('Error', 'Could not stop recording.');
+        console.error("Error stopping recording:", error);
+        Alert.alert("Error", "Could not stop recording.");
       }
     } else {
       try {
         const { granted } = await Audio.requestPermissionsAsync();
         if (!granted) {
-          Alert.alert('Permission Denied', 'Recording permission is required.');
+          Alert.alert("Permission Denied", "Recording permission is required.");
           return;
         }
 
+        // Ensure no previous recording exists
+        if (recording) {
+          await recording.stopAndUnloadAsync();
+          setRecording(null);
+        }
+
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+        });
+
         const newRecording = new Audio.Recording();
-        await newRecording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
+        await newRecording.prepareToRecordAsync(
+          Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
+        );
         await newRecording.startAsync();
+
         setRecording(newRecording);
         setIsRecording(true);
-        setResultText('');
+        setResultText("");
         setAnimation(null);
       } catch (error) {
-        console.error('Error starting recording:', error);
-        Alert.alert('Error', 'Could not start recording.');
+        console.error("Error starting recording:", error);
+        Alert.alert("Error", "Could not start recording.");
       }
     }
   };
 
   const handleAudioAnalysis = async (uri) => {
+    if (!uri) {
+      console.error("No URI found for audio file.");
+      return;
+    }
+
     setLoading(true);
 
     const formData = new FormData();
-    formData.append('audio', {
+    formData.append("audio", {
       uri,
-      type: 'audio/wav',
-      name: 'recorded_audio.wav',
+      type: "audio/wav",
+      name: "recorded_audio.wav",
     });
-    formData.append('reference_text', referenceText);
+    formData.append("reference_text", referenceText);
 
     try {
-      const response = await fetch('https://active-firm-cougar.ngrok-free.app/process_video', {
-        method: 'POST',
+      const response = await fetch(`http://172.26.248.176:6000/process_audio`, {
+        method: "POST",
         body: formData,
       });
 
@@ -83,17 +105,17 @@ export default function PracticeSpeakingScreen({ route, navigation }) {
       const { differences } = data;
 
       if (differences.length === 0) {
-        setResultText('Excellent! Your pronunciation is perfect.');
-        setAnimation(require('../../assets/animations/dung.json'));
+        setResultText("Excellent! Your pronunciation is perfect.");
+        setAnimation(require("../../assets/animations/dung.json"));
       } else {
-        setResultText('Some mistakes were found. Try again!');
-        setAnimation(require('../../assets/animations/sai.json'));
+        setResultText("Some mistakes were found. Try again!");
+        setAnimation(require("../../assets/animations/sai.json"));
       }
 
       setAnalysisResult(data);
     } catch (error) {
-      console.error('Error while processing pronunciation:', error);
-      Alert.alert('Error', 'Could not connect to the server.');
+      console.error("Error while processing pronunciation:", error);
+      Alert.alert("Error", "Could not connect to the server. Try again later.");
     } finally {
       setLoading(false);
     }
@@ -106,12 +128,12 @@ export default function PracticeSpeakingScreen({ route, navigation }) {
           <Text
             key={index}
             style={{
-              color: item.color === 'green' ? 'green' : 'red',
+              color: item.color === "green" ? "green" : "red",
               fontSize: 18,
-              fontWeight: 'bold',
+              fontWeight: "bold",
             }}
           >
-            {item.word}{' '}
+            {item.word}{" "}
           </Text>
         ))}
       </View>
@@ -120,17 +142,25 @@ export default function PracticeSpeakingScreen({ route, navigation }) {
 
   return (
     <ImageBackground
-      source={require('../../assets/images/anhnenchinh.png')}
+      source={require("../../assets/images/anhnenchinh.png")}
       style={styles.backgroundImage}
     >
       <View style={styles.container}>
-        <Heading title="Practice Speaking" onBackPress={() => navigation.goBack()} />
+        <Heading
+          title="Practice Speaking"
+          onBackPress={() => navigation.goBack()}
+        />
 
         <Text style={styles.referenceText}>{referenceText}</Text>
 
         {animation && (
           <View style={styles.animationContainer}>
-            <LottieView source={animation} autoPlay loop style={styles.animation} />
+            <LottieView
+              source={animation}
+              autoPlay
+              loop
+              style={styles.animation}
+            />
           </View>
         )}
 
@@ -146,11 +176,14 @@ export default function PracticeSpeakingScreen({ route, navigation }) {
 
         <View style={styles.microphoneContainer}>
           <TouchableOpacity
-            style={[styles.microphoneButton, isRecording && styles.recordingButton]}
+            style={[
+              styles.microphoneButton,
+              isRecording && styles.recordingButton,
+            ]}
             onPress={handleMicrophonePress}
           >
             <Image
-              source={require('../../assets/images/Micro.png')}
+              source={require("../../assets/images/Micro.png")}
               style={styles.microphoneIcon}
             />
           </TouchableOpacity>
@@ -165,25 +198,25 @@ export default function PracticeSpeakingScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   container: {
     flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
+    justifyContent: "flex-start",
+    alignItems: "center",
   },
   referenceText: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginTop: 20,
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   animationContainer: {
     height: 150,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginVertical: 20,
   },
   animation: {
@@ -191,48 +224,48 @@ const styles = StyleSheet.create({
     height: 150,
   },
   resultBox: {
-    width: '85%',
+    width: "85%",
     minHeight: 50,
-    backgroundColor: '#F0F8FF',
+    backgroundColor: "#F0F8FF",
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 20,
     elevation: 2,
     paddingHorizontal: 10,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   textRow: {
-    flexDirection: 'row',
-    flexWrap: 'nowrap',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    justifyContent: "center",
+    alignItems: "center",
   },
   resultText: {
     fontSize: 18,
-    color: '#000',
-    textAlign: 'center',
+    color: "#000",
+    textAlign: "center",
   },
   microphoneContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginVertical: 180,
   },
   microphoneButton: {
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     width: 100,
     height: 100,
     borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     elevation: 5,
   },
   recordingButton: {
-    backgroundColor: '#FF6347',
+    backgroundColor: "#FF6347",
   },
   microphoneIcon: {
     width: 60,
     height: 60,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
 });

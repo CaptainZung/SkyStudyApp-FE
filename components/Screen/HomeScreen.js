@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, createContext, useContext } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,25 +16,13 @@ import * as ImagePicker from 'expo-image-picker';
 import BottomNav from '../Root/BottomNav';
 import { useAvatar } from '../Root/AvatarContext';
 
-// Context for Avatar
-const AvatarContext = createContext();
-
-export const AvatarProvider = ({ children }) => {
-  const [avatarSource, setAvatarSource] = useState(null);
-
-  return (
-    <AvatarContext.Provider value={{ avatarSource, setAvatarSource }}>
-      {children}
-    </AvatarContext.Provider>
-  );
-};
 const screenWidth = Dimensions.get('window').width;
 
 export default function HomeScreen({ route }) {
   const navigation = useNavigation();
   const { avatarSource, setAvatarSource } = useAvatar();
-  const initialUserName = route?.params?.userName ?? 'Guest';
-  const [userName] = useState(initialUserName);
+  const userName = route?.params?.userName ?? 'Guest';
+
   const [kpiDays, setKpiDays] = useState({
     Sun: false,
     Mon: false,
@@ -46,32 +34,26 @@ export default function HomeScreen({ route }) {
   });
   const [currentDay, setCurrentDay] = useState('');
   const bannerScale = useRef(new Animated.Value(1)).current;
+  const scrollViewRef = useRef(null);
+  const currentIndexRef = useRef(0);
 
-  // Get the current day of the week
-  const getCurrentDay = () => {
+  // Xác định ngày hiện tại
+  useEffect(() => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const today = new Date().getDay();
-    return days[today];
-  };
+    setCurrentDay(days[today]);
 
-  // Update the current day and set KPI completion
-  useEffect(() => {
-    const today = getCurrentDay();
-    setCurrentDay(today);
-
-    const timer = setTimeout(() => {
-      setKpiDays((prevState) => ({ ...prevState, [today]: true }));
-    }, 30 * 60 * 1000); // 30 minutes
-
-    return () => clearTimeout(timer);
+    setTimeout(() => {
+      setKpiDays((prev) => ({ ...prev, [days[today]]: true }));
+    }, 30 * 60 * 1000);
   }, []);
 
-  // Image picker for choosing avatar
+  // Chọn ảnh đại diện
   const chooseImage = async () => {
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permissionResult.granted) {
-        Alert.alert('Permission Denied', 'You need to allow access to your media library to use this feature.');
+      const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!granted) {
+        Alert.alert('Permission Denied', 'Bạn cần cấp quyền truy cập thư viện ảnh.');
         return;
       }
 
@@ -86,7 +68,7 @@ export default function HomeScreen({ route }) {
         setAvatarSource({ uri: result.assets[0].uri });
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred while selecting the image.');
+      Alert.alert('Error', 'Lỗi khi chọn ảnh.');
     }
   };
 
@@ -97,39 +79,25 @@ export default function HomeScreen({ route }) {
     { image: require('../../assets/images/banner3.jpg') },
   ];
 
-  const scrollViewRef = useRef(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex === banners.length - 1 ? 0 : prevIndex + 1));
+      currentIndexRef.current = (currentIndexRef.current + 1) % banners.length;
       Animated.sequence([
-        Animated.timing(bannerScale, {
-          toValue: 1.1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(bannerScale, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
+        Animated.timing(bannerScale, { toValue: 1.1, duration: 300, useNativeDriver: true }),
+        Animated.timing(bannerScale, { toValue: 1, duration: 300, useNativeDriver: true }),
       ]).start();
-      if (scrollViewRef.current) {
-        scrollViewRef.current.scrollTo({ x: screenWidth * (currentIndex + 1), animated: true });
-      }
+      scrollViewRef.current?.scrollTo({ x: screenWidth * currentIndexRef.current, animated: true });
     }, 3000);
     return () => clearInterval(interval);
-  }, [currentIndex]);
+  }, []);
 
   return (
     <ImageBackground source={require('../../assets/images/anhnenchinh.png')} style={styles.backgroundImage}>
       {/* Avatar Section */}
       <View style={styles.avatarSection}>
-        <TouchableOpacity onPress={chooseImage}>
-          <Image source={avatarSource ? avatarSource : require('../../assets/images/user.png')} style={styles.avatar} />
+        <TouchableOpacity onPress={chooseImage} activeOpacity={0.8}>
+          <Image source={avatarSource || require('../../assets/images/user.png')} style={styles.avatar} />
         </TouchableOpacity>
-
         <View style={styles.infoContainer}>
           <Text style={styles.greeting}>Hello {userName}</Text>
         </View>
@@ -137,18 +105,9 @@ export default function HomeScreen({ route }) {
 
       {/* Banner Section */}
       <View style={styles.bannerWrapper}>
-        <ScrollView
-          ref={scrollViewRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          style={styles.bannerContainer}
-        >
+        <ScrollView ref={scrollViewRef} horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={styles.bannerContainer}>
           {banners.map((banner, index) => (
-            <Animated.View
-              key={index}
-              style={[styles.banner, { transform: [{ scale: bannerScale }] }]}
-            >
+            <Animated.View key={index} style={[styles.banner, { transform: [{ scale: bannerScale }] }]}>
               <Image source={banner.image} style={styles.bannerImage} />
             </Animated.View>
           ))}
@@ -166,20 +125,16 @@ export default function HomeScreen({ route }) {
 
       {/* Buttons Section */}
       <View style={styles.buttonsContainer}>
-        <TouchableOpacity style={[styles.button, styles.blueButton]} onPress={() => navigation.navigate('EnglishByTopic')}>
-          <Image source={require('../../assets/images/englishbytopic_icon.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Tiếng Anh theo chủ đề</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.button, styles.blueButton]} onPress={() => navigation.navigate('Game')}>
-          <Image source={require('../../assets/images/game_icon.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Chơi game</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.button, styles.blueButton]} onPress={() => navigation.navigate('Dictionary')}>
-          <Image source={require('../../assets/images/dictionary_icon.png')} style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Từ điển của bạn</Text>
-        </TouchableOpacity>
+        {[
+          { name: 'EnglishByTopic', label: 'Tiếng Anh theo chủ đề', icon: require('../../assets/images/englishbytopic_icon.png') },
+          { name: 'Game', label: 'Chơi game', icon: require('../../assets/images/game_icon.png') },
+          { name: 'Dictionary', label: 'Từ điển của bạn', icon: require('../../assets/images/dictionary_icon.png') },
+        ].map((item) => (
+          <TouchableOpacity key={item.name} style={styles.button} onPress={() => navigation.navigate(item.name)}>
+            <Image source={item.icon} style={styles.buttonIcon} />
+            <Text style={styles.buttonText}>{item.label}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <BottomNav />
@@ -188,121 +143,21 @@ export default function HomeScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    resizeMode: 'cover',
-    justifyContent: 'center',
-  },
-  avatarSection: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#ccc',
-    borderWidth: 2,
-    borderColor: '#FFF',
-  },
-  infoContainer: {
-    marginLeft: 15,
-  },
-  greeting: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-    textShadowColor: '#000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-  bannerWrapper: {
-    marginTop: 120,
-  },
-  bannerContainer: {
-    height: 220,
-    marginBottom: 10,
-  },
-  banner: {
-    width: screenWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bannerImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 10,
-  },
-  daysContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 10,
-    marginTop: 15,
-    marginBottom: 15,
-  },
-  day: {
-    width: 40,
-    height: 50,
-    backgroundColor: '#ddd',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 25,
-    elevation: 5,
-    marginHorizontal: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  },
-  dayCompleted: {
-    backgroundColor: '#4CAF50',
-  },
-  dayText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  dayTextCompleted: {
-    color: '#FFF',
-  },
-  buttonsContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginBottom: 30,
-    width: '100%',
-  },
-  button: {
-    flexDirection: 'row',
-    backgroundColor: '#00BCD4',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    alignItems: 'center',
-    marginBottom: 15,
-    width: '80%',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  buttonIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 10,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  blueButton: {
-    backgroundColor: '#2196F3',
-  },
+  backgroundImage: { flex: 1, resizeMode: 'cover', justifyContent: 'center' },
+  avatarSection: { position: 'absolute', top: 50, left: 20, flexDirection: 'row', alignItems: 'center' },
+  avatar: { width: 96, height: 96, borderRadius: 48, borderWidth: 2, borderColor: '#FFF' },
+  infoContainer: { marginLeft: 15 },
+  greeting: { fontSize: 24, fontWeight: 'bold', color: '#FFF', textShadowColor: '#000', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2 },
+  bannerWrapper: { marginTop: 120 },
+  bannerContainer: { height: 220, marginBottom: 10 },
+  banner: { width: screenWidth, alignItems: 'center', justifyContent: 'center' },
+  bannerImage: { width: '100%', height: '100%', borderRadius: 10 },
+  daysContainer: { flexDirection: 'row', justifyContent: 'space-around', marginVertical: 15 },
+  day: { width: 40, height: 50, backgroundColor: '#ddd', justifyContent: 'center', alignItems: 'center', borderRadius: 25, elevation: 5 },
+  dayCompleted: { backgroundColor: '#4CAF50' },
+  buttonsContainer: { alignItems: 'center', marginBottom: 30 },
+  button: { flexDirection: 'row', backgroundColor: '#2196F3', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 25, alignItems: 'center', marginBottom: 15, width: '80%', justifyContent: 'center' },
+  buttonIcon: { width: 24, height: 24, marginRight: 10 },
+  buttonText: { fontSize: 16, fontWeight: 'bold', color: '#FFF' },
 });
+
